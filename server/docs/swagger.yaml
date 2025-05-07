@@ -1,0 +1,65 @@
+openapi: 3.0.1
+info:
+  title: Xeno CRM Ingestion API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001
+paths:
+  /api/customers:
+    post:
+      summary: Create a new customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Validation error
+    get:
+      summary: List all customers
+      responses:
+        '200':
+          description: OK
+  /api/orders:
+    post:
+      summary: Create a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '201':
+          description: Created
+    get:
+      summary: List all orders
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Customer:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string }
+        spend: { type: number }
+        visits: { type: integer }
+    Order:
+      type: object
+      properties:
+        customerId: { type: string }
+        amount: { type: number }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              qty: { type: integer }
+              price: { type: number }
