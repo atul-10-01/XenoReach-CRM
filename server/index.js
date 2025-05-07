@@ -8,6 +8,7 @@ import YAML from 'yamljs';
 import customerRoutes from './routes/customers.js';
 import orderRoutes from './routes/orders.js';
 import geminiRoutes from './routes/gemini.js';
+import segmentRoutes from './routes/segments.js';
 
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 app.use('/api/customers', customerRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/gemini', geminiRoutes);
+app.use('/api/segments', segmentRoutes);
 
 // Health-check
 app.get('/', (req, res) => res.send('Xeno CRM API is running'));

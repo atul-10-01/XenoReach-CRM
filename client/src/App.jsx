@@ -1,26 +1,15 @@
-import { useState } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+// client/src/App.jsx
+import React from 'react';
+import SegmentBuilder from './components/SegmentBuilder';
 
-function App() {
-  const [user, setUser] = useState(null);
+export default function App() {
+  const handleSave = (ruleJson) => {
+    console.log('✍️ Saved rule tree:', ruleJson);
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      {!user ? (
-        <GoogleLogin
-          onSuccess={credentialResponse => {
-            console.log('Google token:', credentialResponse.credential);
-            setUser(credentialResponse);
-          }}
-          onError={() => {
-            console.error('Login Failed');
-          }}
-        />
-      ) : (
-        <h1 className="text-2xl">Welcome, you’re logged in!</h1>
-      )}
+    <div className="min-h-screen bg-gray-100 flex items-start justify-center py-10">
+      <SegmentBuilder onSave={handleSave} />
     </div>
   );
 }
-
-export default App;
