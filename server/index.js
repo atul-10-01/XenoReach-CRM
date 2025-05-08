@@ -10,6 +10,7 @@ import orderRoutes from './routes/orders.js';
 import geminiRoutes from './routes/gemini.js';
 import segmentRoutes from './routes/segments.js';
 import campaignRoutes from './routes/campaigns.js';
+import analyticsRoutes from './routes/analytics.js';
 
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/gemini', geminiRoutes);
 app.use('/api/segments', segmentRoutes);
 app.use('/api/campaigns', campaignRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health-check
 app.get('/', (req, res) => res.send('Xeno CRM API is running'));

@@ -2,26 +2,42 @@
 import React, { useState, useRef } from 'react';
 import SegmentBuilder from './components/SegmentBuilder';
 import CampaignCreator from './components/CampaignCreator';
+import CampaignHistory from './pages/CampaignHistory';
 import { Toaster } from 'react-hot-toast';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('segments'); // 'segments' or 'campaigns'
+  const [activeTab, setActiveTab] = useState('segments');
   const campaignCreatorRef = useRef();
 
-  const handleSave = (ruleJson) => {
-    console.log('✍️ Saved rule tree:', ruleJson);
+  const handleSegmentSave = () => {
+    if (campaignCreatorRef.current?.refreshSegments) {
+      campaignCreatorRef.current.refreshSegments();
+    }
   };
 
-  // When a segment is saved, trigger refresh in CampaignCreator
-  const handleSegmentSave = () => {
-    if (campaignCreatorRef.current && campaignCreatorRef.current.refreshSegments) {
-      campaignCreatorRef.current.refreshSegments();
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'segments':
+        return (
+          <div className="bg-white rounded-lg shadow">
+            <SegmentBuilder onSave={handleSegmentSave} />
+          </div>
+        );
+      case 'campaigns':
+        return (
+          <div className="bg-white rounded-lg shadow">
+            <CampaignCreator ref={campaignCreatorRef} />
+          </div>
+        );
+      case 'history':
+        return <CampaignHistory />;
+      default:
+        return null;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Navigation */}
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -30,26 +46,23 @@ export default function App() {
                 <h1 className="text-xl font-bold text-gray-800">XenoReach CRM</h1>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <button
-                  onClick={() => setActiveTab('segments')}
-                  className={`${
-                    activeTab === 'segments'
-                      ? 'border-blue-500 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                >
-                  Segment Builder
-                </button>
-                <button
-                  onClick={() => setActiveTab('campaigns')}
-                  className={`${
-                    activeTab === 'campaigns'
-                      ? 'border-blue-500 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                >
-                  Campaign Creator
-                </button>
+                {[
+                  { id: 'segments', label: 'Segment Builder' },
+                  { id: 'campaigns', label: 'Campaign Creator' },
+                  { id: 'history', label: 'Campaign History' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`${
+                      activeTab === tab.id
+                        ? 'border-blue-500 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -58,39 +71,29 @@ export default function App() {
         {/* Mobile menu */}
         <div className="sm:hidden">
           <div className="pt-2 pb-3 space-y-1">
-            <button
-              onClick={() => setActiveTab('segments')}
-              className={`${
-                activeTab === 'segments'
-                  ? 'bg-blue-50 border-blue-500 text-blue-700'
-                  : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
-              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium w-full text-left`}
-            >
-              Segment Builder
-            </button>
-            <button
-              onClick={() => setActiveTab('campaigns')}
-              className={`${
-                activeTab === 'campaigns'
-                  ? 'bg-blue-50 border-blue-500 text-blue-700'
-                  : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
-              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium w-full text-left`}
-            >
-              Campaign Creator
-            </button>
+            {[
+              { id: 'segments', label: 'Segment Builder' },
+              { id: 'campaigns', label: 'Campaign Creator' },
+              { id: 'history', label: 'Campaign History' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`${
+                  activeTab === tab.id
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium w-full text-left`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow">
-          {activeTab === 'segments' ? (
-            <SegmentBuilder onSave={handleSegmentSave} />
-          ) : (
-            <CampaignCreator ref={campaignCreatorRef} />
-          )}
-        </div>
+        {renderContent()}
       </main>
 
       <Toaster position="top-right" />
