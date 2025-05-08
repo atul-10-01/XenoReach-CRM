@@ -165,7 +165,7 @@ export default function SegmentBuilder({ onSave }) {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateQuery()) {
       return;
     }
@@ -175,40 +175,41 @@ export default function SegmentBuilder({ onSave }) {
       return;
     }
 
-    // Create the segment object
-    const newSegment = { 
-      id: Date.now(), // Simple unique ID
-      name: segmentName, 
-      rules: sanitizeQuery(query),
-      createdAt: new Date(),
-      customerCount: previewCount || 0
-    };
-    
-    // Add to saved segments list
-    setSavedSegments(prevSegments => [...prevSegments, newSegment]);
-    
-    // Show success message
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
-    
-    // Call the parent's onSave handler if provided
-    if (onSave) {
-      onSave(newSegment);
+    setLoading(true);
+    setError('');
+    try {
+      // POST to backend
+      const response = await axios.post(`${API_BASE_URL}/segments`, {
+        name: segmentName,
+        rules: sanitizeQuery(query)
+      });
+      if (response.data.success) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+        // Call parent's onSave handler if provided (to trigger refresh in CampaignCreator)
+        if (onSave) {
+          onSave(response.data.segment);
+        }
+        setSegmentName('');
+      } else {
+        setError(response.data.message || 'Failed to save segment');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save segment');
+    } finally {
+      setLoading(false);
     }
-    
-    // Reset the segment name (optional)
-    setSegmentName('');
   };
 
   // Custom rendering for the operator selector to make it more intuitive
   const OperatorSelector = (props) => {
     const currentValue = typeof props.value === 'object' ? props.value.name : (props.value || '>');
     return (
-      <div className="inline-block min-w-[180px]">
+      <div className="inline-block min-w-[120px] w-full sm:w-auto">
         <select
           value={currentValue}
           onChange={e => props.handleOnChange(e.target.value)}
-          className="border px-2 py-1 rounded bg-white min-w-[180px] block w-full"
+          className="border px-2 py-1 rounded bg-white min-w-[120px] w-full sm:w-auto block"
           style={{appearance: 'menulist'}}
         >
           {props.options.map(option => (
@@ -232,7 +233,7 @@ export default function SegmentBuilder({ onSave }) {
         type={inputType}
         value={props.value ?? defaultValue}
         onChange={e => props.handleOnChange(e.target.value)}
-        className="border px-2 py-1 rounded bg-white w-32"
+        className="border px-2 py-1 rounded bg-white w-full sm:w-32 block"
         placeholder={defaultValue}
       />
     );
@@ -243,11 +244,11 @@ export default function SegmentBuilder({ onSave }) {
     const fieldOptions = props.options || [];
     
     return (
-      <div className="relative inline-block">
+      <div className="relative inline-block w-full sm:w-auto">
         <select
           value={props.value}
           onChange={e => props.handleOnChange(e.target.value)}
-          className="border px-2 py-1 rounded bg-white"
+          className="border px-2 py-1 rounded bg-white w-full sm:w-auto block"
         >
           {fieldOptions.map(option => (
             <option key={option.name} value={option.name}>
@@ -299,21 +300,21 @@ export default function SegmentBuilder({ onSave }) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-2xl shadow-lg">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Define Audience Segment</h2>
+    <div className="w-full max-w-full sm:max-w-2xl lg:max-w-3xl mx-auto p-2 sm:p-4 bg-white rounded-2xl shadow-lg">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+        <h2 className="text-lg sm:text-xl font-semibold">Define Audience Segment</h2>
         <button 
           onClick={() => setShowHelp(!showHelp)}
-          className="text-blue-500 hover:text-blue-700"
+          className="text-blue-500 hover:text-blue-700 text-sm sm:text-base"
         >
           {showHelp ? 'Hide Help' : 'Need Help?'}
         </button>
       </div>
       
       {showHelp && (
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-          <h3 className="font-semibold text-blue-800 mb-2">How to use the Segment Builder</h3>
-          <ul className="list-disc pl-5 text-sm text-blue-800 space-y-2">
+        <div className="mb-6 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-100">
+          <h3 className="font-semibold text-blue-800 mb-2 text-sm">How to use the Segment Builder</h3>
+          <ul className="list-disc pl-5 text-xs sm:text-sm text-blue-800 space-y-2">
             <li>Use <strong>Add Rule</strong> to create conditions for your segment</li>
             <li>Use <strong>Add Group</strong> to create nested conditions with their own AND/OR logic</li>
             <li>AND means customers must match all conditions</li>
@@ -324,7 +325,7 @@ export default function SegmentBuilder({ onSave }) {
       )}
       
       <div className="mb-4">
-        <label htmlFor="segmentName" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="segmentName" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
           Segment Name
         </label>
         <input
@@ -333,71 +334,73 @@ export default function SegmentBuilder({ onSave }) {
           value={segmentName}
           onChange={(e) => setSegmentName(e.target.value)}
           placeholder="E.g., High Value Customers"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm"
         />
       </div>
       
-      <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
-        <div className="mb-2 text-sm text-gray-600">
+      <div className="bg-gray-50 p-2 sm:p-4 rounded-lg mb-4 border border-gray-200 overflow-x-auto">
+        <div className="mb-2 text-xs sm:text-sm text-gray-600">
           <strong>Current Logic:</strong> {getSegmentExplanation()}
         </div>
         
-        <QueryBuilder
-          fields={fields}
-          query={query}
-          onQueryChange={q => setQuery(sanitizeQuery(q))}
-          controlClassnames={{
-            queryBuilder: 'p-4',
-            ruleGroup: 'bg-white p-4 rounded border border-gray-200 my-2',
-            rule: 'p-2 border-l-4 border-blue-200 bg-blue-50 my-2 rounded flex items-center gap-2',
-            value: 'border px-2 py-1 rounded bg-white',
-            addGroup: 'bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm px-3 py-1 rounded border border-blue-200 ml-2',
-            addRule: 'bg-green-50 text-green-600 hover:bg-green-100 text-sm px-3 py-1 rounded border border-green-200 ml-2',
-            removeGroup: 'text-red-500 hover:text-red-700 ml-2',
-            removeRule: 'text-red-500 hover:text-red-700 ml-2',
-            combinators: 'border px-3 py-1 rounded bg-white font-medium ml-2',
-            fields: 'border px-2 py-1 rounded bg-white',
-            operators: 'border px-2 py-1 rounded bg-white ml-2 min-w-[120px]',
-            valueContainer: 'ml-2 flex-grow',
-          }}
-          translations={{
-            addGroup: '+ Add Group',
-            addRule: '+ Add Rule',
-            removeGroup: '×',
-            removeRule: '×',
-            combinators: {
-              and: 'ALL of the following',
-              or: 'ANY of the following'
-            }
-          }}
-          showNotToggle={false}
-          showCloneButtons={false}
-          controlElements={{
-            operatorSelector: OperatorSelector,
-            fieldSelector: FieldSelector,
-            valueEditor: ValueEditor,
-            combinatorSelector: props => (
-              <div className="inline-flex items-center">
-                <span className="mr-2 text-sm font-medium">Match</span>
-                <select
-                  value={props.value}
-                  onChange={e => props.handleOnChange(e.target.value)}
-                  className="border px-3 py-1 rounded bg-white font-medium"
-                >
-                  <option value="and">ALL of the following</option>
-                  <option value="or">ANY of the following</option>
-                </select>
-              </div>
-            ),
-          }}
-          createRule={createRule}
-        />
+        <div className="min-w-[340px] w-full">
+          <QueryBuilder
+            fields={fields}
+            query={query}
+            onQueryChange={q => setQuery(sanitizeQuery(q))}
+            controlClassnames={{
+              queryBuilder: 'p-2 sm:p-4',
+              ruleGroup: 'bg-white p-2 sm:p-4 rounded border border-gray-200 my-2',
+              rule: 'p-2 border-l-4 border-blue-200 bg-blue-50 my-2 rounded flex flex-col sm:flex-row items-stretch sm:items-center gap-2',
+              value: 'border px-2 py-1 rounded bg-white w-full sm:w-auto',
+              addGroup: 'bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs sm:text-sm px-2 sm:px-3 py-1 rounded border border-blue-200 ml-0 sm:ml-2 w-full sm:w-auto',
+              addRule: 'bg-green-50 text-green-600 hover:bg-green-100 text-xs sm:text-sm px-2 sm:px-3 py-1 rounded border border-green-200 ml-0 sm:ml-2 w-full sm:w-auto',
+              removeGroup: 'text-red-500 hover:text-red-700 ml-0 sm:ml-2',
+              removeRule: 'text-red-500 hover:text-red-700 ml-0 sm:ml-2',
+              combinators: 'border px-3 py-1 rounded bg-white font-medium ml-0 sm:ml-2 w-full sm:w-auto',
+              fields: 'border px-2 py-1 rounded bg-white w-full sm:w-auto',
+              operators: 'border px-2 py-1 rounded bg-white ml-0 sm:ml-2 min-w-[120px] w-full sm:w-auto',
+              valueContainer: 'ml-0 sm:ml-2 flex-grow',
+            }}
+            translations={{
+              addGroup: '+ Add Group',
+              addRule: '+ Add Rule',
+              removeGroup: '×',
+              removeRule: '×',
+              combinators: {
+                and: 'ALL of the following',
+                or: 'ANY of the following'
+              }
+            }}
+            showNotToggle={false}
+            showCloneButtons={false}
+            controlElements={{
+              operatorSelector: OperatorSelector,
+              fieldSelector: FieldSelector,
+              valueEditor: ValueEditor,
+              combinatorSelector: props => (
+                <div className="inline-flex items-center w-full sm:w-auto">
+                  <span className="mr-2 text-xs sm:text-sm font-medium">Match</span>
+                  <select
+                    value={props.value}
+                    onChange={e => props.handleOnChange(e.target.value)}
+                    className="border px-3 py-1 rounded bg-white font-medium w-full sm:w-auto"
+                  >
+                    <option value="and">ALL of the following</option>
+                    <option value="or">ANY of the following</option>
+                  </select>
+                </div>
+              ),
+            }}
+            createRule={createRule}
+          />
+        </div>
       </div>
       
       {validationErrors.length > 0 && (
-        <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-          <p className="font-medium text-yellow-800">Please fix the following issues:</p>
-          <ul className="mt-1 list-disc pl-5 text-sm text-yellow-700">
+        <div className="mb-4 p-2 sm:p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+          <p className="font-medium text-yellow-800 text-xs sm:text-sm">Please fix the following issues:</p>
+          <ul className="mt-1 list-disc pl-5 text-xs sm:text-sm text-yellow-700">
             {validationErrors.map((err, i) => (
               <li key={i}>{err}</li>
             ))}
@@ -405,11 +408,11 @@ export default function SegmentBuilder({ onSave }) {
         </div>
       )}
       
-      <div className="flex items-center space-x-4 mt-6">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-6">
         <button
           onClick={handlePreview}
           disabled={loading || validationErrors.length > 0}
-          className={`px-5 py-2 rounded-xl text-white flex items-center ${
+          className={`w-full sm:w-auto px-4 sm:px-5 py-2 rounded-xl text-white flex items-center justify-center text-xs sm:text-base ${
             loading || validationErrors.length > 0 
               ? 'bg-gray-400 cursor-not-allowed' 
               : 'bg-blue-500 hover:bg-blue-600'
@@ -428,7 +431,7 @@ export default function SegmentBuilder({ onSave }) {
         <button
           onClick={handleSave}
           disabled={validationErrors.length > 0 || !segmentName.trim()}
-          className={`px-5 py-2 rounded-xl text-white ${
+          className={`w-full sm:w-auto px-4 sm:px-5 py-2 rounded-xl text-white text-xs sm:text-base ${
             validationErrors.length > 0 || !segmentName.trim()
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-green-500 hover:bg-green-600'
@@ -440,30 +443,30 @@ export default function SegmentBuilder({ onSave }) {
 
       {previewCount !== null && !loading && (
         <div className="mt-6 space-y-4">
-          <div className="p-4 bg-blue-50 rounded-lg text-blue-800 border border-blue-100">
-            <div className="flex items-center">
-              <span className="text-2xl mr-2">🎯</span>
+          <div className="p-3 sm:p-4 bg-blue-50 rounded-lg text-blue-800 border border-blue-100">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <span className="text-xl sm:text-2xl mr-2">🎯</span>
               <div>
-                <p className="font-medium">Matched customers: <strong>{previewCount.toLocaleString()}</strong></p>
-                <p className="text-sm mt-1">{getSegmentExplanation()}</p>
+                <p className="font-medium text-xs sm:text-base">Matched customers: <strong>{previewCount.toLocaleString()}</strong></p>
+                <p className="text-xs sm:text-sm mt-1">{getSegmentExplanation()}</p>
               </div>
             </div>
           </div>
           
           {previewResults.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="p-3 bg-gray-50 border-b border-gray-200 font-medium flex justify-between items-center">
-                <span>Sample Customers ({previewResults.length})</span>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+              <div className="p-2 sm:p-3 bg-gray-50 border-b border-gray-200 font-medium flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <span className="text-xs sm:text-base">Sample Customers ({previewResults.length})</span>
                 <span className="text-xs text-gray-500">Showing a sample of matching customers</span>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead className="bg-gray-50">
                     <tr>
                       {Object.keys(previewResults[0]).map(key => (
                         <th 
                           key={key}
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           {key}
                         </th>
@@ -474,7 +477,7 @@ export default function SegmentBuilder({ onSave }) {
                     {previewResults.map((customer, i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         {Object.values(customer).map((val, j) => (
-                          <td key={j} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td key={j} className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                             {typeof val === 'object' && val instanceof Date 
                               ? val.toLocaleString() 
                               : String(val)}
@@ -491,14 +494,14 @@ export default function SegmentBuilder({ onSave }) {
       )}
 
       {error && (
-        <div className="mt-4 p-3 bg-red-50 rounded-lg text-red-800 border border-red-200">
+        <div className="mt-4 p-3 bg-red-50 rounded-lg text-red-800 border border-red-200 text-xs sm:text-sm">
           ⚠️ {error}
         </div>
       )}
 
       {saveSuccess && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-white text-green-700 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 border border-green-200 z-50 animate-fade-in">
-          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-white text-green-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow-lg flex items-center space-x-2 border border-green-200 z-50 animate-fade-in text-xs sm:text-base">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
           </svg>
           <span className="font-medium">Segment saved successfully!</span>
@@ -508,17 +511,17 @@ export default function SegmentBuilder({ onSave }) {
       {/* Display saved segments */}
       {savedSegments.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-lg font-medium mb-3">Saved Segments</h3>
+          <h3 className="text-base sm:text-lg font-medium mb-3">Saved Segments</h3>
           <div className="space-y-3">
             {savedSegments.map(segment => (
-              <div key={segment.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                <div className="flex justify-between items-center">
-                  <h4 className="font-medium text-lg">{segment.name}</h4>
-                  <span className="text-sm text-gray-500">
+              <div key={segment.id} className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <h4 className="font-medium text-base sm:text-lg">{segment.name}</h4>
+                  <span className="text-xs sm:text-sm text-gray-500">
                     {segment.customerCount.toLocaleString()} customers
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">
                   {getSegmentExplanation(segment.rules)}
                 </p>
                 <p className="text-xs text-gray-400 mt-2">
