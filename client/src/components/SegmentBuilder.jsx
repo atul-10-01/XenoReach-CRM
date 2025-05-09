@@ -239,10 +239,9 @@ export default function SegmentBuilder({ onSave }) {
     );
   };
 
-  // Custom rendering for field selector with tooltips
+  // Custom rendering for field selector with tooltips and better labels
   const FieldSelector = (props) => {
     const fieldOptions = props.options || [];
-    
     return (
       <div className="relative inline-block w-full sm:w-auto">
         <select
@@ -256,14 +255,6 @@ export default function SegmentBuilder({ onSave }) {
             </option>
           ))}
         </select>
-        {props.value && (
-          <div className="inline-block ml-1 text-gray-500 cursor-help group relative">
-            <span>ℹ️</span>
-            <div className="hidden group-hover:block absolute z-10 bg-gray-800 text-white p-2 rounded text-xs w-60 -left-28 top-6">
-              {fields.find(f => f.name === props.value)?.tooltip || 'Field description'}
-            </div>
-          </div>
-        )}
       </div>
     );
   };
@@ -343,7 +334,7 @@ export default function SegmentBuilder({ onSave }) {
           <strong>Current Logic:</strong> {getSegmentExplanation()}
         </div>
         
-        <div className="min-w-[340px] w-full">
+        <div className="min-w-[340px] w-full text-xs sm:text-sm">
           <QueryBuilder
             fields={fields}
             query={query}
