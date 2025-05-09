@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
-  BarChart, Bar, CartesianGrid, PieChart, Pie, Cell
+  BarChart, Bar, CartesianGrid
 } from 'recharts';
+import { ResponsivePie } from '@nivo/pie';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -13,9 +14,14 @@ const COLORS = ['#15803d', '#EF4444', '#F59E0B'];
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
+    // Try to get campaign name from payload
+    const campaignName = payload[0]?.payload?.name;
     return (
       <div className="bg-white p-4 rounded-lg shadow-lg border">
-        <p className="font-semibold">{label}</p>
+        {campaignName && (
+          <p className="font-semibold text-base text-gray-900 mb-1">{campaignName}</p>
+        )}
+        <p className="text-xs text-gray-500 mb-1">Index: {label}</p>
         {payload.map((entry, index) => (
           <p key={index} style={{ color: entry.color }}>
             {entry.name}: {entry.value}{entry.unit || ''}
@@ -121,13 +127,16 @@ export default function CampaignHistory() {
     { name: 'Pending', value: totalStats.pending }
   ];
 
+  // When preparing data for charts, add an index property to each campaign
+  const dataWithIndex = data.map((campaign, i) => ({ ...campaign, index: i + 1 }));
+
   return (
-    <div className="p-2 sm:p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-8 gap-4">
-          <h1 className="text-xl sm:text-3xl font-bold text-gray-900">📊 Campaign Analytics</h1>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex gap-2">
+    <div className="p-2 sm:p-4 md:p-8 bg-gray-50 min-h-screen w-full">
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-8 gap-2 md:gap-4">
+          <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-gray-900">📊 Campaign Analytics</h1>
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
+            <div className="flex gap-2 flex-wrap">
               <DatePresetButton
                 label="Last 24 Hours"
                 onClick={() => handlePresetClick('24h')}
@@ -174,18 +183,18 @@ export default function CampaignHistory() {
         <div className="grid grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-2">
           {/* Success Rate Chart */}
           <div className="bg-white p-2 sm:p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4 text-gray-800">Success Rate Over Time</h2>
-            <div className="h-[250px] sm:h-[400px]">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-4 text-gray-800">Success Rate Over Time</h2>
+            <div className="h-[200px] sm:h-[300px] md:h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 30 }}>
+                <LineChart data={dataWithIndex} margin={{ top: 10, right: 30, left: 0, bottom: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
-                    dataKey="name" 
-                    angle={-30}
-                    textAnchor="end"
-                    height={60}
+                    dataKey="index"
+                    angle={0}
+                    textAnchor="middle"
+                    height={40}
                     interval={0}
-                    tick={{ fontSize: 13 }}
+                    tick={{ fontSize: 13, fill: '#666' }}
                   />
                   <YAxis unit="%" tick={{ fontSize: 13 }} />
                   <Tooltip content={<CustomTooltip />} />
@@ -211,61 +220,68 @@ export default function CampaignHistory() {
 
           {/* Message Status Distribution Pie Chart */}
           <div className="bg-white p-2 sm:p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4 text-gray-800">Overall Message Status</h2>
-            <div className="h-[250px] sm:h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent, x, y }) => (
-                      <text
-                        x={x}
-                        y={y - 10}
-                        fill="#333"
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fontSize={14}
-                      >
-                        {`${name} ${(percent * 100).toFixed(0)}%`}
-                      </text>
-                    )}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend
-                    verticalAlign="bottom"
-                    align="center"
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: 14, marginTop: 8 }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-4 text-gray-800">Overall Message Status</h2>
+            <div className="flex flex-col items-center justify-center h-[220px] sm:h-[340px] md:h-[360px]">
+              <div style={{ height: '140px', width: '100%' }} className="sm:h-[220px] md:h-[220px]">
+                <ResponsivePie
+                  data={pieData.map((d, i) => ({
+                    id: d.name,
+                    label: `${d.name}`,
+                    value: d.value,
+                    color: COLORS[i % COLORS.length],
+                  }))}
+                  margin={{ top: 20, right: 10, bottom: 20, left: 10 }}
+                  innerRadius={0.7}
+                  padAngle={2}
+                  cornerRadius={6}
+                  colors={COLORS}
+                  enableArcLabels={true}
+                  arcLabelsSkipAngle={0}
+                  arcLabelsTextColor="#fff"
+                  arcLabel={d => d.value > 0 ? `${((d.value / pieData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(0)}%` : ''}
+                  enableArcLinkLabels={false}
+                  tooltip={({ datum }) => (
+                    <div className="bg-white p-3 rounded-lg shadow-lg border text-sm">
+                      <span className="font-semibold" style={{ color: datum.color }}>{datum.id}</span>
+                      <div className="mt-1">Count: <b>{datum.value}</b></div>
+                      <div>Percent: <b>{datum.formattedValue && datum.data.value > 0 ? ((datum.value / pieData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1) : 0}%</b></div>
+                    </div>
+                  )}
+                  legends={[]}
+                />
+              </div>
+              {/* Custom Legend */}
+              <div className="flex flex-row justify-center items-center gap-4 sm:gap-8 mt-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full" style={{ background: COLORS[0], display: 'inline-block' }}></span>
+                  <span className="text-sm text-gray-700">Sent</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full" style={{ background: COLORS[1], display: 'inline-block' }}></span>
+                  <span className="text-sm text-gray-700">Failed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full" style={{ background: COLORS[2], display: 'inline-block' }}></span>
+                  <span className="text-sm text-gray-700">Pending</span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Sent vs Failed Chart */}
           <div className="bg-white p-2 sm:p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-            <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4 text-gray-800">Message Status Distribution</h2>
-            <div className="h-[250px] sm:h-[400px]">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-4 text-gray-800">Message Status Distribution</h2>
+            <div className="h-[180px] sm:h-[300px] md:h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data} barCategoryGap={24}>
+                <BarChart data={dataWithIndex} barCategoryGap={24}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
-                    dataKey="name" 
-                    angle={-30}
-                    textAnchor="end"
-                    height={60}
+                    dataKey="index"
+                    angle={0}
+                    textAnchor="middle"
+                    height={40}
                     interval={0}
-                    tick={{ fontSize: 13 }}
+                    tick={{ fontSize: 13, fill: '#666' }}
                   />
                   <YAxis tick={{ fontSize: 13 }} />
                   <Tooltip content={<CustomTooltip />} />
@@ -286,31 +302,31 @@ export default function CampaignHistory() {
 
         {/* Campaign Stats Table */}
         <div className="mt-4 sm:mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-          <div className="p-2 sm:p-6">
-            <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4 text-gray-800">Campaign Details</h2>
+          <div className="p-2 sm:p-4 md:p-6">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-4 text-gray-800">Campaign Details</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full text-xs sm:text-sm divide-y divide-gray-200">
+              <table className="min-w-full text-[10px] sm:text-xs md:text-sm lg:text-base divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
-                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Segment</th>
-                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sent</th>
-                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Failed</th>
-                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
-                    <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
+                    <th className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
+                    <th className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-gray-500 uppercase tracking-wider">Segment</th>
+                    <th className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-gray-500 uppercase tracking-wider">Sent</th>
+                    <th className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-gray-500 uppercase tracking-wider">Failed</th>
+                    <th className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                    <th className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {data.map((campaign) => (
                     <tr key={campaign.campaignId} className="hover:bg-gray-50">
-                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{campaign.name}</td>
-                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{campaign.segmentName}</td>
-                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{campaign.total}</td>
-                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{campaign.sent}</td>
-                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{campaign.failed}</td>
-                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{campaign.pending}</td>
-                      <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      <td className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-gray-900">{campaign.name}</td>
+                      <td className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-500">{campaign.segmentName}</td>
+                      <td className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-500">{campaign.total}</td>
+                      <td className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-500">{campaign.sent}</td>
+                      <td className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-500">{campaign.failed}</td>
+                      <td className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-500">{campaign.pending}</td>
+                      <td className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-500">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           campaign.successRate >= 90 ? 'bg-green-100 text-green-800' :
                           campaign.successRate >= 70 ? 'bg-yellow-100 text-yellow-800' :
