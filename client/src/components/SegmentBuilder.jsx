@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { QueryBuilder, formatQuery } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
 import axios from 'axios';
+import { Eye, Save, Target, AlertTriangle, Check } from 'lucide-react';
 
 // Define API base URL based on environment
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -417,7 +418,12 @@ export default function SegmentBuilder({ onSave }) {
               </svg>
               Previewing...
             </>
-          ) : '👁️ Preview Audience'}
+          ) : (
+            <>
+              <Eye className="inline-block mr-1" size={18} />
+              Preview Audience
+            </>
+          )}
         </button>
         <button
           onClick={handleSave}
@@ -428,7 +434,8 @@ export default function SegmentBuilder({ onSave }) {
               : 'bg-green-500 hover:bg-green-600'
           }`}
         >
-          💾 Save Segment
+          <Save className="inline-block mr-1" size={18} />
+          Save Segment
         </button>
       </div>
 
@@ -436,7 +443,7 @@ export default function SegmentBuilder({ onSave }) {
         <div className="mt-6 space-y-4">
           <div className="p-2 sm:p-3 md:p-4 bg-blue-50 rounded-lg text-blue-800 border border-blue-100">
             <div className="flex flex-col sm:flex-row md:flex-row items-start sm:items-center md:items-center gap-2 md:gap-4">
-              <span className="text-xl sm:text-2xl md:text-3xl mr-2">🎯</span>
+              <Target className="text-blue-600 mr-2" size={28} />
               <div>
                 <p className="font-medium text-xs sm:text-base md:text-lg">Matched customers: <strong>{previewCount.toLocaleString()}</strong></p>
                 <p className="text-xs sm:text-sm md:text-base mt-1">{getSegmentExplanation()}</p>
@@ -486,15 +493,14 @@ export default function SegmentBuilder({ onSave }) {
 
       {error && (
         <div className="mt-4 p-2 sm:p-3 md:p-4 bg-red-50 rounded-lg text-red-800 border border-red-200 text-xs sm:text-sm md:text-base">
-          ⚠️ {error}
+          <AlertTriangle className="inline-block mr-1 text-yellow-600" size={18} />
+          {error}
         </div>
       )}
 
       {saveSuccess && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-white text-green-700 px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 rounded-lg shadow-lg flex items-center space-x-2 border border-green-200 z-50 animate-fade-in text-xs sm:text-base md:text-lg">
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-          </svg>
+          <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
           <span className="font-medium">Segment saved successfully!</span>
         </div>
       )}

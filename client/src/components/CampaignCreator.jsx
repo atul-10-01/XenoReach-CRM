@@ -1,6 +1,7 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { Send, Sparkles } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -132,7 +133,8 @@ const CampaignCreator = forwardRef((props, ref) => {
               disabled={!selectedSegment || loading}
               className="w-full sm:w-auto px-3 sm:px-4 md:px-6 py-2 md:py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs sm:text-sm md:text-base"
             >
-              <span>✨ Get AI Suggestions</span>
+              <Sparkles className="inline-block mr-1" size={18} />
+              <span>Get AI Suggestions</span>
             </button>
           </div>
           {suggestions.length > 0 && (
@@ -183,7 +185,8 @@ const CampaignCreator = forwardRef((props, ref) => {
               </>
             ) : (
               <>
-                <span>📤 Send Campaign</span>
+                <Send className="inline-block mr-1" size={18} />
+                <span>Send Campaign</span>
               </>
             )}
           </button>

@@ -9,6 +9,8 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format, subDays, subHours } from 'date-fns';
+import { FiDownload } from 'react-icons/fi';
+import { BarChart2 } from 'lucide-react';
 
 const COLORS = ['#15803d', '#EF4444', '#F59E0B'];
 
@@ -96,6 +98,45 @@ export default function CampaignHistory() {
     setEndDate(now);
   };
 
+  const handleExportCSV = () => {
+    // Prepare CSV for campaign stats table
+    const tableHeaders = ['Campaign', 'Segment', 'Total', 'Sent', 'Failed', 'Pending', 'Success Rate (%)'];
+    const tableRows = data.map(row => [
+      row.name,
+      row.segmentName,
+      row.total,
+      row.sent,
+      row.failed,
+      row.pending,
+      row.successRate
+    ]);
+    let csvContent = 'Campaign Analytics Table\n';
+    csvContent += tableHeaders.join(',') + '\n';
+    csvContent += tableRows.map(r => r.join(',')).join('\n') + '\n\n';
+
+    // Success Rate Over Time (Line Chart)
+    csvContent += 'Success Rate Over Time (Line Chart)\n';
+    csvContent += 'Index,Campaign,Success Rate (%)\n';
+    csvContent += data.map((row, i) => `${i + 1},${row.name},${row.successRate}`).join('\n') + '\n\n';
+
+    // Message Status Distribution (Bar Chart)
+    csvContent += 'Message Status Distribution (Bar Chart)\n';
+    csvContent += 'Index,Campaign,Sent,Failed,Pending\n';
+    csvContent += data.map((row, i) => `${i + 1},${row.name},${row.sent},${row.failed},${row.pending}`).join('\n') + '\n\n';
+
+    // Pie Chart Data
+    csvContent += 'Overall Message Status (Pie Chart)\n';
+    csvContent += 'Status,Count\n';
+    csvContent += pieData.map(d => `${d.name},${d.value}`).join('\n') + '\n';
+
+    // Download as CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'campaign_analytics_full.csv';
+    link.click();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -131,11 +172,20 @@ export default function CampaignHistory() {
   const dataWithIndex = data.map((campaign, i) => ({ ...campaign, index: i + 1 }));
 
   return (
-    <div className="p-2 sm:p-4 md:p-8 bg-gray-50 min-h-screen w-full">
+    <div id="campaign-dashboard-export" className="p-2 sm:p-4 md:p-8 bg-gray-50 min-h-screen w-full">
       <div className="max-w-7xl mx-auto w-full">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-8 gap-2 md:gap-4">
-          <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-gray-900">📊 Campaign Analytics</h1>
-          <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
+          <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-gray-900 flex items-center gap-2"><BarChart2 className="inline-block text-blue-600" size={28} /> Campaign Analytics</h1>
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-4 relative">
+            <button
+              onClick={handleExportCSV}
+              className="p-2 bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition flex items-center justify-center shadow-sm"
+              aria-label="Export as CSV"
+              title="Export as CSV"
+              style={{ height: 36, width: 36 }}
+            >
+              <FiDownload className="text-blue-600" size={18} />
+            </button>
             <div className="flex gap-2 flex-wrap">
               <DatePresetButton
                 label="Last 24 Hours"
