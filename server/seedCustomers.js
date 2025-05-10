@@ -1,69 +1,50 @@
 import mongoose from 'mongoose';
-import Customer from './models/Customer.js';
 import dotenv from 'dotenv';
+import Customer from './models/Customer.js';
+import User from './models/User.js';
 
-dotenv.config();
+dotenv.config(); // Loads .env from the current directory (server/)
 
-const sampleCustomers = [
-  {
-    name: 'John Doe',
-    email: 'john@example.com',
-    spend: 1500,
-    visits: 5,
-    lastOrderDate: new Date('2024-03-01'),
-    tags: ['vip', 'frequent'],
-    location: {
-      city: 'New York',
-      state: 'NY',
-      country: 'USA'
-    }
-  },
-  {
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    spend: 800,
-    visits: 3,
-    lastOrderDate: new Date('2024-02-15'),
-    tags: ['regular'],
-    location: {
-      city: 'Los Angeles',
-      state: 'CA',
-      country: 'USA'
-    }
-  },
-  {
-    name: 'Bob Wilson',
-    email: 'bob@example.com',
-    spend: 2500,
-    visits: 8,
-    lastOrderDate: new Date('2024-03-10'),
-    tags: ['vip', 'whale'],
-    location: {
-      city: 'Chicago',
-      state: 'IL',
-      country: 'USA'
-    }
-  }
-];
+// Connect to your MongoDB
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
-async function seedCustomers() {
+async function seed() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/xenoreach');
-    console.log('Connected to MongoDB');
+    // Find a user to assign as createdBy (replace with your user's email or _id)
+    const user = await User.findOne({ email: 'atulya1202112@gmail.com' }); // <-- change this!
+    if (!user) throw new Error('User not found!');
 
-    // Clear existing customers
-    await Customer.deleteMany({});
-    console.log('Cleared existing customers');
+    // Example customers to seed
+    const customers = [
+      {
+        name: 'Atul Nag',
+        email: 'atulknag@gmail.com',
+        phone: '1234567890',
+        spend: 10000,
+        visits: 5,
+        lastOrderDate: new Date('2025-05-01'), // REQUIRED
+        createdBy: user._id
+      },
+      {
+        name: 'Tanvi Nag',
+        email: 'crazyatulya@gmail.com',
+        phone: '0987654321',
+        spend: 15000,
+        visits: 10,
+        lastOrderDate: new Date('2024-04-15'), // REQUIRED
+        createdBy: user._id
+      }
+      // Add more customers as needed, lastOrderDate is required
+    ];
 
-    // Insert new customers
-    const customers = await Customer.insertMany(sampleCustomers);
-    console.log(`Added ${customers.length} customers`);
-
-    process.exit(0);
+    // Insert customers
+    await Customer.insertMany(customers);
+    console.log('Customers seeded!');
   } catch (err) {
-    console.error('Error seeding customers:', err);
-    process.exit(1);
+    console.error('Seeding error:', err);
+  } finally {
+    mongoose.disconnect();
   }
 }
 
-seedCustomers(); 
+seed();

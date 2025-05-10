@@ -10,7 +10,6 @@ const CustomerSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
     lowercase: true
   },
@@ -28,7 +27,8 @@ const CustomerSchema = new mongoose.Schema({
   },
   lastOrderDate: {
     type: Date,
-    default: null
+    required: true,
+    // Allow manual input for seeding and segmentation
   },
   firstOrderDate: {
     type: Date,
@@ -83,6 +83,8 @@ CustomerSchema.index({ visits: 1 });
 CustomerSchema.index({ lastOrderDate: 1 });
 CustomerSchema.index({ tags: 1 });
 CustomerSchema.index({ 'location.country': 1, 'location.state': 1, 'location.city': 1 });
+// Compound unique index for multi-tenancy: unique per user
+CustomerSchema.index({ email: 1, createdBy: 1 }, { unique: true });
 
 const Customer = mongoose.model('Customer', CustomerSchema);
 

@@ -8,7 +8,7 @@ import Login from './pages/Login';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Landing from './pages/Landing';
+import Landing from './components/Landing';
 import Register from './pages/Register';
 
 function DashboardNav() {
