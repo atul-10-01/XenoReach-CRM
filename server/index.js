@@ -1,9 +1,11 @@
+import dotenv from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import swaggerUI from 'swagger-ui-express';
 import YAML from 'yamljs';
+import passport from 'passport';
+import authRoutes from './routes/auth.js';
 
 import customerRoutes from './routes/customers.js';
 import orderRoutes from './routes/orders.js';
@@ -12,20 +14,20 @@ import segmentRoutes from './routes/segments.js';
 import campaignRoutes from './routes/campaigns.js';
 import analyticsRoutes from './routes/analytics.js';
 
-
 dotenv.config();
 const app = express();
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
-
+app.use(passport.initialize());
 
 // Swagger setup
 const swaggerDoc = YAML.load('./docs/swagger.yaml');
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDoc));
 
 // Mount routes
+app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/gemini', geminiRoutes);

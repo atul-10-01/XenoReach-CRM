@@ -1,102 +1,66 @@
 // client/src/App.jsx
-import React, { useState, useRef } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import SegmentBuilder from './components/SegmentBuilder';
 import CampaignCreator from './components/CampaignCreator';
 import CampaignHistory from './pages/CampaignHistory';
+import Login from './pages/Login';
 import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './components/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState('segments');
-  const campaignCreatorRef = useRef();
-
-  const handleSegmentSave = () => {
-    if (campaignCreatorRef.current?.refreshSegments) {
-      campaignCreatorRef.current.refreshSegments();
-    }
-  };
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'segments':
-        return (
-          <div className="bg-white rounded-lg shadow">
-            <SegmentBuilder onSave={handleSegmentSave} />
-          </div>
-        );
-      case 'campaigns':
-        return (
-          <div className="bg-white rounded-lg shadow">
-            <CampaignCreator ref={campaignCreatorRef} />
-          </div>
-        );
-      case 'history':
-        return <CampaignHistory />;
-      default:
-        return null;
-    }
-  };
-
+function DashboardNav() {
+  const { user, logout, isAdmin } = useAuth();
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-800">XenoReach CRM</h1>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                {[
-                  { id: 'segments', label: 'Segment Builder' },
-                  { id: 'campaigns', label: 'Campaign Creator' },
-                  { id: 'history', label: 'Campaign History' }
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`${
-                      activeTab === tab.id
-                        ? 'border-blue-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+    <nav className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <h1 className="text-xl font-bold text-gray-800">XenoReach CRM</h1>
+            </div>
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <Link to="/segments" className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">Segment Builder</Link>
+              <Link to="/campaigns" className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">Campaign Creator</Link>
+              <Link to="/history" className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">Campaign History</Link>
+              {isAdmin && <Link to="/analytics" className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-blue-500 hover:border-blue-300 hover:text-blue-700">Analytics (Admin)</Link>}
             </div>
           </div>
-        </div>
-
-        {/* Mobile menu */}
-        <div className="sm:hidden">
-          <div className="pt-2 pb-3 space-y-1">
-            {[
-              { id: 'segments', label: 'Segment Builder' },
-              { id: 'campaigns', label: 'Campaign Creator' },
-              { id: 'history', label: 'Campaign History' }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`${
-                  activeTab === tab.id
-                    ? 'bg-blue-50 border-blue-500 text-blue-700'
-                    : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
-                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium w-full text-left`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="flex items-center">
+            {user ? (
+              <>
+                <span className="text-gray-700 mr-4">{user.name} ({user.role})</span>
+                <button onClick={logout} className="text-blue-600 hover:underline">Logout</button>
+              </>
+            ) : (
+              <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
+            )}
           </div>
         </div>
-      </nav>
+      </div>
+    </nav>
+  );
+}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {renderContent()}
-      </main>
-
-      <Toaster position="top-right" />
-    </div>
+export default function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <DashboardNav />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/segments" element={<ProtectedRoute><SegmentBuilder /></ProtectedRoute>} />
+            <Route path="/campaigns" element={<ProtectedRoute><CampaignCreator /></ProtectedRoute>} />
+            <Route path="/history" element={<ProtectedRoute><CampaignHistory /></ProtectedRoute>} />
+            {/* Example admin-only route: */}
+            {/* <Route path="/analytics" element={<AdminRoute><AnalyticsPage /></AdminRoute>} /> */}
+            <Route path="/" element={<Navigate to="/segments" replace />} />
+          </Routes>
+        </main>
+        <Toaster position="top-right" />
+      </Router>
+    </AuthProvider>
   );
 }

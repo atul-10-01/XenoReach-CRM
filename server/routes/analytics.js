@@ -3,8 +3,13 @@ import Campaign from '../models/Campaign.js';
 import CommLog from '../models/CommunicationLog.js';
 import Segment from '../models/Segment.js';
 import { Parser as Json2csvParser } from 'json2csv';
+import authenticate from '../middleware/authenticate.js';
+import authorize from '../middleware/authorize.js';
 
 const router = express.Router();
+
+// Protect all analytics routes: admin only
+router.use(authenticate, authorize(['admin']));
 
 // GET /api/analytics/campaigns
 // Returns list of campaigns with sent / success / failure counts
