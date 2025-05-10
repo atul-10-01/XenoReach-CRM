@@ -47,6 +47,9 @@ router.get('/campaigns', async (req, res) => {
       {
         $group: {
           _id: '$campaignId',
+          name: { $first: '$campaign.name' },
+          segmentName: { $first: '$segment.name' },
+          createdAt: { $first: '$campaign.createdAt' },
           total: { $sum: 1 },
           sent: { $sum: { $cond: [{ $eq: ['$status', 'SENT'] }, 1, 0] } },
           failed: { $sum: { $cond: [{ $eq: ['$status', 'FAILED'] }, 1, 0] } },
@@ -56,9 +59,9 @@ router.get('/campaigns', async (req, res) => {
       {
         $project: {
           campaignId: '$_id',
-          name: '$campaign.name',
-          segmentName: '$segment.name',
-          createdAt: '$campaign.createdAt',
+          name: 1,
+          segmentName: 1,
+          createdAt: 1,
           total: 1,
           sent: 1,
           failed: 1,
