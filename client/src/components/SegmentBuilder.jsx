@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { QueryBuilder, formatQuery } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
-import axios from 'axios';
+import { useAuth } from '../components/AuthContext';
+import { authFetch } from '../utils/authFetch';
 import { Eye, Save, Target, AlertTriangle, Check } from 'lucide-react';
 
 // Define API base URL based on environment
@@ -61,6 +62,7 @@ const fields = [
 ];
 
 export default function SegmentBuilder({ onSave }) {
+  const { token } = useAuth();
   const [query, setQuery] = useState({
     combinator: 'and', 
     rules: [
@@ -144,23 +146,22 @@ export default function SegmentBuilder({ onSave }) {
     if (!validateQuery()) {
       return;
     }
-    
     setError('');
     setLoading(true);
-    
     try {
-      console.log('Sending preview request to:', `${API_BASE_URL}/segments/preview`);
-      const { data } = await axios.post(`${API_BASE_URL}/segments/preview`, { rules: sanitizeQuery(query) });
-      console.log('Preview response:', data);
-      
+      const res = await authFetch(
+        `${API_BASE_URL}/segments/preview`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ rules: sanitizeQuery(query) })
+        },
+        token
+      );
+      const data = await res.json();
       setPreviewCount(data.count);
       setPreviewResults(data.sample || []);
     } catch (err) {
-      console.error('Preview error:', err);
-      setError(
-        err.response?.data?.message || 
-        `Failed to preview segment: ${err.message}. Make sure your API server is running at ${API_BASE_URL}`
-      );
+      setError('Failed to preview segment');
     } finally {
       setLoading(false);
     }
@@ -170,33 +171,37 @@ export default function SegmentBuilder({ onSave }) {
     if (!validateQuery()) {
       return;
     }
-    
     if (!segmentName.trim()) {
       setError('Please provide a name for this segment');
       return;
     }
-
     setLoading(true);
     setError('');
     try {
-      // POST to backend
-      const response = await axios.post(`${API_BASE_URL}/segments`, {
-        name: segmentName,
-        rules: sanitizeQuery(query)
-      });
-      if (response.data.success) {
+      const res = await authFetch(
+        `${API_BASE_URL}/segments`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            name: segmentName,
+            rules: sanitizeQuery(query)
+          })
+        },
+        token
+      );
+      const data = await res.json();
+      if (data.success) {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
-        // Call parent's onSave handler if provided (to trigger refresh in CampaignCreator)
         if (onSave) {
-          onSave(response.data.segment);
+          onSave(data.segment);
         }
         setSegmentName('');
       } else {
-        setError(response.data.message || 'Failed to save segment');
+        setError(data.message || 'Failed to save segment');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save segment');
+      setError('Failed to save segment');
     } finally {
       setLoading(false);
     }

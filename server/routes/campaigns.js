@@ -5,13 +5,16 @@ import Segment from '../models/Segment.js';
 import CommLog from '../models/CommunicationLog.js';
 import { buildMongoQuery } from '../utils/queryBuilder.js';
 import { sendCampaignEmails } from '../utils/emailService.js';
+import authenticate from '../middleware/authenticate.js';
 
 const router = express.Router();
+
+router.use(authenticate);
 
 // Get all campaigns
 router.get('/', async (req, res) => {
   try {
-    const campaigns = await Campaign.find()
+    const campaigns = await Campaign.find({ createdBy: req.user._id })
       .populate('segmentId', 'name')
       .sort({ createdAt: -1 });
     res.json({ success: true, campaigns });
@@ -30,12 +33,12 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const segment = await Segment.findById(segmentId);
+    const segment = await Segment.findOne({ _id: segmentId, createdBy: req.user._id });
     if (!segment) {
       return res.status(404).json({ success: false, message: 'Segment not found' });
     }
 
-    const mongoQuery = buildMongoQuery(segment.rules);
+    const mongoQuery = { ...buildMongoQuery(segment.rules), createdBy: req.user._id };
     const customers = await Customer.find(mongoQuery).select('email name');
 
     const campaign = new Campaign({
@@ -43,7 +46,8 @@ router.post('/', async (req, res) => {
       message,
       segmentId,
       customerCount: customers.length,
-      status: 'sent'
+      status: 'sent',
+      createdBy: req.user._id
     });
 
     await campaign.save();

@@ -8,8 +8,8 @@ import authorize from '../middleware/authorize.js';
 
 const router = express.Router();
 
-// Protect all analytics routes: admin only
-router.use(authenticate, authorize(['admin']));
+// Protect all analytics routes: any authenticated user
+router.use(authenticate);
 
 // GET /api/analytics/campaigns
 // Returns list of campaigns with sent / success / failure counts
@@ -23,6 +23,28 @@ router.get('/campaigns', async (req, res) => {
 
     const stats = await CommLog.aggregate([
       {
+        $lookup: {
+          from: 'campaigns',
+          localField: 'campaignId',
+          foreignField: '_id',
+          as: 'campaign'
+        }
+      },
+      { $unwind: '$campaign' },
+      { $match: { 'campaign.createdBy': req.user._id } },
+      ...(startDate || endDate ? [{ $match: { 'campaign.createdAt': matchCampaignDate } }] : []),
+      {
+        $lookup: {
+          from: 'segments',
+          let: { segmentId: '$campaign.segmentId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$segmentId'] }, createdBy: req.user._id } }
+          ],
+          as: 'segment'
+        }
+      },
+      { $unwind: '$segment' },
+      {
         $group: {
           _id: '$campaignId',
           total: { $sum: 1 },
@@ -31,25 +53,6 @@ router.get('/campaigns', async (req, res) => {
           pending: { $sum: { $cond: [{ $eq: ['$status', 'PENDING'] }, 1, 0] } }
         }
       },
-      {
-        $lookup: {
-          from: 'campaigns',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'campaign'
-        }
-      },
-      { $unwind: '$campaign' },
-      ...(startDate || endDate ? [{ $match: { 'campaign.createdAt': matchCampaignDate } }] : []),
-      {
-        $lookup: {
-          from: 'segments',
-          localField: 'campaign.segmentId',
-          foreignField: '_id',
-          as: 'segment'
-        }
-      },
-      { $unwind: '$segment' },
       {
         $project: {
           campaignId: '$_id',
@@ -89,6 +92,7 @@ router.get('/campaigns', async (req, res) => {
 router.get('/segments', async (req, res) => {
   try {
     const stats = await Segment.aggregate([
+      { $match: { createdBy: req.user._id } },
       {
         $lookup: {
           from: 'campaigns',
@@ -130,6 +134,28 @@ router.get('/campaigns/csv', async (req, res) => {
 
     const stats = await CommLog.aggregate([
       {
+        $lookup: {
+          from: 'campaigns',
+          localField: 'campaignId',
+          foreignField: '_id',
+          as: 'campaign'
+        }
+      },
+      { $unwind: '$campaign' },
+      { $match: { 'campaign.createdBy': req.user._id } },
+      ...(startDate || endDate ? [{ $match: { 'campaign.createdAt': matchCampaignDate } }] : []),
+      {
+        $lookup: {
+          from: 'segments',
+          let: { segmentId: '$campaign.segmentId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$segmentId'] }, createdBy: req.user._id } }
+          ],
+          as: 'segment'
+        }
+      },
+      { $unwind: '$segment' },
+      {
         $group: {
           _id: '$campaignId',
           total: { $sum: 1 },
@@ -138,25 +164,6 @@ router.get('/campaigns/csv', async (req, res) => {
           pending: { $sum: { $cond: [{ $eq: ['$status', 'PENDING'] }, 1, 0] } }
         }
       },
-      {
-        $lookup: {
-          from: 'campaigns',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'campaign'
-        }
-      },
-      { $unwind: '$campaign' },
-      ...(startDate || endDate ? [{ $match: { 'campaign.createdAt': matchCampaignDate } }] : []),
-      {
-        $lookup: {
-          from: 'segments',
-          localField: 'campaign.segmentId',
-          foreignField: '_id',
-          as: 'segment'
-        }
-      },
-      { $unwind: '$segment' },
       {
         $project: {
           campaignId: '$_id',

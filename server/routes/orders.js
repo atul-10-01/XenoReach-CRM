@@ -2,8 +2,11 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import Order from '../models/Order.js';
 import Customer from '../models/Customer.js';
+import authenticate from '../middleware/authenticate.js';
 
 const router = express.Router();
+
+router.use(authenticate);
 
 // POST /api/orders
 router.post(
@@ -23,10 +26,10 @@ router.post(
 
     try {
       // Ensure customer exists
-      const cust = await Customer.findById(req.body.customerId);
+      const cust = await Customer.findOne({ _id: req.body.customerId, createdBy: req.user._id });
       if (!cust) return res.status(404).json({ error: 'Customer not found' });
 
-      const order = new Order(req.body);
+      const order = new Order({ ...req.body, createdBy: req.user._id });
       await order.save();
 
       // Update customer stats
@@ -45,7 +48,7 @@ router.post(
 
 // GET /api/orders
 router.get('/', async (req, res) => {
-  const list = await Order.find().sort('-createdAt');
+  const list = await Order.find({ createdBy: req.user._id }).sort('-createdAt');
   res.json(list);
 });
 

@@ -3,8 +3,11 @@ import express from 'express';
 import { buildMongoQuery, validateQuery } from '../utils/queryBuilder.js';
 import Customer from '../models/Customer.js';
 import Segment from '../models/Segment.js';
+import authenticate from '../middleware/authenticate.js';
 
 const router = express.Router();
+
+router.use(authenticate);
 
 /**
  * Preview a segment based on query rules
@@ -25,7 +28,7 @@ router.post('/preview', async (req, res) => {
     }
     
     // Build MongoDB query
-    const mongoQuery = buildMongoQuery(rules);
+    const mongoQuery = { ...buildMongoQuery(rules), createdBy: req.user._id };
     
     // Get count and sample customers
     const count = await Customer.countDocuments(mongoQuery);
@@ -75,8 +78,8 @@ router.post('/', async (req, res) => {
       });
     }
     
-    // Check if segment name already exists
-    const existingSegment = await Segment.findOne({ name: name.trim() });
+    // Check if segment name already exists for this user
+    const existingSegment = await Segment.findOne({ name: name.trim(), createdBy: req.user._id });
     if (existingSegment) {
       return res.status(400).json({
         success: false,
@@ -92,6 +95,7 @@ router.post('/', async (req, res) => {
       name: name.trim(),
       rules,
       mongoQuery, // Store the compiled query for reference
+      createdBy: req.user._id,
       createdAt: new Date(),
       lastRun: null,
       customerCount: null
@@ -132,7 +136,7 @@ router.post('/', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const segments = await Segment.find()
+    const segments = await Segment.find({ createdBy: req.user._id })
       .select('name customerCount createdAt lastRun')
       .sort({ createdAt: -1 });
     
@@ -155,7 +159,7 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const segment = await Segment.findById(req.params.id);
+    const segment = await Segment.findOne({ _id: req.params.id, createdBy: req.user._id });
     
     if (!segment) {
       return res.status(404).json({

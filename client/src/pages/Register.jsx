@@ -3,11 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../components/AuthContext';
 
-export default function Login() {
+export default function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,12 +20,12 @@ export default function Login() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tokenId: credentialResponse.credential })
       });
-      if (!res.ok) throw new Error('Google login failed');
+      if (!res.ok) throw new Error('Google registration failed');
       const data = await res.json();
       login(data.token, data.user);
       navigate('/segments');
     } catch (err) {
-      setError('Authentication failed. Please try again.');
+      setError('Google registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -35,30 +36,38 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ name, email, password })
       });
-      if (!res.ok) throw new Error('Invalid credentials');
+      if (!res.ok) throw new Error('Registration failed');
       const data = await res.json();
       login(data.token, data.user);
       navigate('/segments');
     } catch (err) {
-      setError('Invalid email or password.');
+      setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm flex flex-col items-center">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900">Sign in to XenoReach CRM</h1>
+        <h1 className="text-2xl font-bold mb-6 text-gray-900">Create your XenoReach CRM account</h1>
         <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
+            type="text"
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+            placeholder="Full Name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+          />
+          <input
             type="email"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
             placeholder="Email"
             value={email}
             onChange={e => setEmail(e.target.value)}
@@ -66,7 +75,7 @@ export default function Login() {
           />
           <input
             type="password"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
             placeholder="Password"
             value={password}
             onChange={e => setPassword(e.target.value)}
@@ -74,10 +83,10 @@ export default function Login() {
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white rounded-lg py-2 font-semibold hover:bg-blue-700 transition"
+            className="bg-green-600 text-white rounded-lg py-2 font-semibold hover:bg-green-700 transition"
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
         <div className="my-4 w-full flex items-center">
@@ -87,12 +96,12 @@ export default function Login() {
         </div>
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
-          onError={() => setError('Google login failed')}
+          onError={() => setError('Google registration failed')}
           width="100%"
         />
         <div className="mt-4 text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-blue-600 hover:underline">Register</Link>
+          Already have an account?{' '}
+          <Link to="/login" className="text-green-600 hover:underline">Sign In</Link>
         </div>
         {error && <div className="mt-4 text-red-600 text-sm">{error}</div>}
       </div>

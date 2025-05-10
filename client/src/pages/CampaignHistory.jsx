@@ -11,19 +11,16 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format, subDays, subHours } from 'date-fns';
 import { FiDownload } from 'react-icons/fi';
 import { BarChart2 } from 'lucide-react';
+import { useAuth } from '../components/AuthContext';
 
 const COLORS = ['#15803d', '#EF4444', '#F59E0B'];
 
-const CustomTooltip = ({ active, payload, label }) => {
+const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
-    // Try to get campaign name from payload
     const campaignName = payload[0]?.payload?.name;
     return (
       <div className="bg-white p-4 rounded-lg shadow-lg border">
-        {campaignName && (
-          <p className="font-semibold text-base text-gray-900 mb-1">{campaignName}</p>
-        )}
-        <p className="text-xs text-gray-500 mb-1">Index: {label}</p>
+        <p className="font-bold text-lg text-blue-700 mb-1">{campaignName}</p>
         {payload.map((entry, index) => (
           <p key={index} style={{ color: entry.color }}>
             {entry.name}: {entry.value}{entry.unit || ''}
@@ -49,6 +46,7 @@ const DatePresetButton = ({ label, onClick, active }) => (
 );
 
 export default function CampaignHistory() {
+  const { token } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -64,6 +62,9 @@ export default function CampaignHistory() {
         params: {
           startDate: format(startDate, 'yyyy-MM-dd'),
           endDate: format(endDate, 'yyyy-MM-dd')
+        },
+        headers: {
+          Authorization: `Bearer ${token}`
         }
       });
       setData(response.data.stats);
@@ -168,8 +169,13 @@ export default function CampaignHistory() {
     { name: 'Pending', value: totalStats.pending }
   ];
 
-  // When preparing data for charts, add an index property to each campaign
-  const dataWithIndex = data.map((campaign, i) => ({ ...campaign, index: i + 1 }));
+  // When preparing data for charts, add an index property and ensure name/segmentName are present
+  const dataWithIndex = data.map((campaign, i) => ({
+    ...campaign,
+    name: campaign.name || '-',
+    segmentName: campaign.segmentName || '-',
+    index: i + 1
+  }));
 
   return (
     <div id="campaign-dashboard-export" className="p-2 sm:p-4 md:p-8 bg-gray-50 min-h-screen w-full">
@@ -240,11 +246,9 @@ export default function CampaignHistory() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="index"
-                    angle={0}
-                    textAnchor="middle"
-                    height={40}
-                    interval={0}
-                    tick={{ fontSize: 13, fill: '#666' }}
+                    tick={false}
+                    axisLine={false}
+                    tickLine={false}
                   />
                   <YAxis unit="%" tick={{ fontSize: 13 }} />
                   <Tooltip content={<CustomTooltip />} />
@@ -368,7 +372,7 @@ export default function CampaignHistory() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {data.map((campaign) => (
+                  {dataWithIndex.map((campaign) => (
                     <tr key={campaign.campaignId} className="hover:bg-gray-50">
                       <td className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-[10px] sm:text-xs md:text-sm lg:text-base font-medium text-gray-900">{campaign.name}</td>
                       <td className="px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-500">{campaign.segmentName}</td>

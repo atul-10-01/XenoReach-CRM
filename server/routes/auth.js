@@ -4,8 +4,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { OAuth2Client } from 'google-auth-library';
 import { GOOGLE_CLIENT_ID, JWT_SECRET } from '../config.js';
-
-
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
@@ -35,18 +34,50 @@ router.post('/google', async (req, res) => {
   }
 });
 
-// GET /api/auth/me - Verify the current user
-router.get('/me', async (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ message: 'No token' });
-  const token = auth.split(' ')[1];
+// POST /api/auth/login
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(payload.userId);
-    if (!user) return res.status(401).json({ message: 'User not found' });
-    res.json({ user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    const user = await User.findOne({ email });
+    if (!user || !user.password) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+    const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
+    res.status(500).json({ message: 'Login failed', error: err.message });
+  }
+});
+
+// POST /api/auth/register
+router.post('/register', async (req, res) => {
+  const { name, email, password } = req.body;
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'Name, email, and password are required' });
+  }
+  try {
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: 'Email already registered' });
+    }
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name,
+      email,
+      password: hashed,
+      role: 'user',
+    });
+    const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+  } catch (err) {
+    res.status(500).json({ message: 'Registration failed', error: err.message });
   }
 });
 

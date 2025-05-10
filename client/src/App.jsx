@@ -8,10 +8,11 @@ import Login from './pages/Login';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
+import Landing from './pages/Landing';
+import Register from './pages/Register';
 
 function DashboardNav() {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout } = useAuth();
   return (
     <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,17 +25,19 @@ function DashboardNav() {
               <Link to="/segments" className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">Segment Builder</Link>
               <Link to="/campaigns" className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">Campaign Creator</Link>
               <Link to="/history" className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">Campaign History</Link>
-              {isAdmin && <Link to="/analytics" className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent text-blue-500 hover:border-blue-300 hover:text-blue-700">Analytics (Admin)</Link>}
             </div>
           </div>
           <div className="flex items-center">
             {user ? (
               <>
-                <span className="text-gray-700 mr-4">{user.name} ({user.role})</span>
+                <span className="text-gray-700 mr-4">{user.name}</span>
                 <button onClick={logout} className="text-blue-600 hover:underline">Logout</button>
               </>
             ) : (
-              <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
+              <>
+                <Link to="/login" className="text-blue-600 hover:underline mr-2">Login</Link>
+                <Link to="/register" className="text-blue-600 hover:underline">Register</Link>
+              </>
             )}
           </div>
         </div>
@@ -50,13 +53,12 @@ export default function App() {
         <DashboardNav />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Routes>
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/segments" element={<ProtectedRoute><SegmentBuilder /></ProtectedRoute>} />
             <Route path="/campaigns" element={<ProtectedRoute><CampaignCreator /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><CampaignHistory /></ProtectedRoute>} />
-            {/* Example admin-only route: */}
-            {/* <Route path="/analytics" element={<AdminRoute><AnalyticsPage /></AdminRoute>} /> */}
-            <Route path="/" element={<Navigate to="/segments" replace />} />
           </Routes>
         </main>
         <Toaster position="top-right" />

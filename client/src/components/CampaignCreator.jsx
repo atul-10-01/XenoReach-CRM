@@ -1,11 +1,13 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import axios from 'axios';
+import { useAuth } from '../components/AuthContext';
+import { authFetch } from '../utils/authFetch';
 import { toast } from 'react-hot-toast';
 import { Send, Sparkles } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const CampaignCreator = forwardRef((props, ref) => {
+  const { token } = useAuth();
   const [segments, setSegments] = useState([]);
   const [selectedSegment, setSelectedSegment] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -25,8 +27,9 @@ const CampaignCreator = forwardRef((props, ref) => {
 
   const fetchSegments = async () => {
     try {
-      const res = await axios.get(`${API_URL}/segments`);
-      setSegments(res.data.segments || []);
+      const res = await authFetch(`${API_URL}/segments`, {}, token);
+      const data = await res.json();
+      setSegments(data.segments || []);
     } catch (err) {
       toast.error('Failed to load segments');
       console.error('Segment fetch error:', err);
@@ -46,12 +49,19 @@ const CampaignCreator = forwardRef((props, ref) => {
 
     try {
       const segment = segments.find(s => s._id === selectedSegment);
-      const res = await axios.post(`${API_URL}/gemini/suggest`, {
-        segmentName: segment.name,
-        segmentDescription: segment.description
-      });
-
-      setSuggestions(res.data.suggestions);
+      const res = await authFetch(
+        `${API_URL}/gemini/suggest`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            segmentName: segment.name,
+            segmentDescription: segment.description
+          })
+        },
+        token
+      );
+      const data = await res.json();
+      setSuggestions(data.suggestions);
     } catch (err) {
       toast.error('Failed to generate suggestions');
       console.error('Suggestion error:', err);
@@ -69,13 +79,20 @@ const CampaignCreator = forwardRef((props, ref) => {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${API_URL}/campaigns`, {
-        name: campaignName,
-        message,
-        segmentId: selectedSegment
-      });
-
-      toast.success(`Campaign sent to ${res.data.sentTo} customers!`);
+      const res = await authFetch(
+        `${API_URL}/campaigns`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            name: campaignName,
+            message,
+            segmentId: selectedSegment
+          })
+        },
+        token
+      );
+      const data = await res.json();
+      toast.success(`Campaign sent to ${data.sentTo} customers!`);
       setMessage('');
       setCampaignName('');
       setSelectedSegment('');
