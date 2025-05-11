@@ -4,7 +4,6 @@ import Customer from '../models/Customer.js';
 import Segment from '../models/Segment.js';
 import CommLog from '../models/CommunicationLog.js';
 import { buildMongoQuery } from '../utils/queryBuilder.js';
-import { sendCampaignEmails } from '../utils/emailService.js';
 import authenticate from '../middleware/authenticate.js';
 
 const router = express.Router();
@@ -62,33 +61,30 @@ router.post('/', async (req, res) => {
 
     await CommLog.insertMany(commLogs);
 
-    // Send emails in background
-    sendCampaignEmails(customers, campaign)
-      .then(async (results) => {
-        // Update communication logs based on email sending results
-        for (let i = 0; i < customers.length; i++) {
-          const customer = customers[i];
-          const result = results[i];
-          
-          await CommLog.findOneAndUpdate(
-            { campaignId: campaign._id, customerId: customer._id },
-            {
-              status: result.success ? 'SENT' : 'FAILED',
-              sentAt: result.success ? new Date() : null,
-              error: result.success ? null : result.error
-            }
-          );
-        }
-      })
-      .catch(error => {
-        console.error('Error in background email sending:', error);
-      });
+    // Simulate sending via dummy vendor API for each customer
+    customers.forEach(async (customer) => {
+      try {
+        await fetch(`${process.env.BACKEND_URL || 'http://localhost:3001'}/api/vendor/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            campaignId: campaign._id,
+            customerId: customer._id,
+            customerEmail: customer.email,
+            customerName: customer.name,
+            message
+          })
+        });
+      } catch (err) {
+        console.error('Dummy vendor API error:', err.message);
+      }
+    });
 
     res.status(201).json({
       success: true,
       campaign,
       sentTo: customers.length,
-      message: 'Campaign created and emails are being sent in the background'
+      message: 'Campaign created and delivery is being simulated in the background'
     });
   } catch (err) {
     console.error('Campaign error:', err);
