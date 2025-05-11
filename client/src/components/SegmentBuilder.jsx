@@ -78,6 +78,9 @@ export default function SegmentBuilder({ onSave }) {
   const [showHelp, setShowHelp] = useState(false);
   const [savedSegments, setSavedSegments] = useState([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [nlInput, setNlInput] = useState('');
+  const [nlLoading, setNlLoading] = useState(false);
+  const [nlError, setNlError] = useState('');
 
   // Custom rule factory to ensure new rules have proper default values
   const createRule = (field) => {
@@ -207,6 +210,33 @@ export default function SegmentBuilder({ onSave }) {
     }
   };
 
+  const handleNLToRules = async () => {
+    if (!nlInput.trim()) return;
+    setNlLoading(true);
+    setNlError('');
+    try {
+      const res = await authFetch(
+        `${API_BASE_URL}/gemini/nl-to-rules`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ description: nlInput })
+        },
+        token
+      );
+      const data = await res.json();
+      if (data.success && data.rules) {
+        setQuery(data.rules);
+        setNlInput('');
+      } else {
+        setNlError(data.message || 'Could not convert description to rules.');
+      }
+    } catch (err) {
+      setNlError('Failed to convert description to rules.');
+    } finally {
+      setNlLoading(false);
+    }
+  };
+
   // Custom rendering for the operator selector to make it more intuitive
   const OperatorSelector = (props) => {
     const currentValue = typeof props.value === 'object' ? props.value.name : (props.value || '>');
@@ -333,6 +363,32 @@ export default function SegmentBuilder({ onSave }) {
           placeholder="E.g., High Value Customers"
           className="w-full px-2 sm:px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm md:text-base"
         />
+      </div>
+
+      {/* NL to Rules UI */}
+      <div className="mb-4">
+        <label htmlFor="nlInput" className="block text-xs sm:text-sm md:text-base font-medium text-gray-700 mb-1">
+          Or describe your segment in plain English
+        </label>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            id="nlInput"
+            value={nlInput}
+            onChange={e => setNlInput(e.target.value)}
+            placeholder="E.g., People who haven't shopped in 6 months and spent over ₹5K"
+            className="flex-1 px-2 sm:px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm md:text-base"
+            disabled={nlLoading}
+          />
+          <button
+            onClick={handleNLToRules}
+            disabled={nlLoading || !nlInput.trim()}
+            className={`px-4 py-2 rounded-md text-white text-xs sm:text-sm md:text-base ${nlLoading || !nlInput.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}`}
+          >
+            {nlLoading ? 'Converting...' : 'Convert to Rules'}
+          </button>
+        </div>
+        {nlError && <div className="mt-2 text-xs text-red-600">{nlError}</div>}
       </div>
       
       <div className="bg-gray-50 p-2 sm:p-4 md:p-6 rounded-lg mb-4 border border-gray-200 overflow-x-auto">

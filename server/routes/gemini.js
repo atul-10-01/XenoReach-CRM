@@ -67,4 +67,55 @@ ${segmentDescription ? segmentDescription : ''}
   }
 });
 
+// New endpoint: Convert NL segment description to rules
+router.post('/nl-to-rules', async (req, res) => {
+  try {
+    const { description } = req.body;
+    if (!description) {
+      return res.status(400).json({ success: false, message: 'Description is required' });
+    }
+
+    // Prompt Gemini to output rules in the expected JSON format
+    const prompt = `
+You are an expert CRM engineer. Convert the following natural language customer segment description into a JSON object suitable for a React QueryBuilder. Use only these fields: 'spend' (number, INR), 'visits' (number), 'inactiveDays' (number of days since last order). Use operators: >, <, =, >=, <=, !=. Output only the JSON, no explanation.
+
+Example input: People who haven't shopped in 6 months and spent over ₹5K
+Example output:
+{
+  "combinator": "and",
+  "rules": [
+    { "field": "inactiveDays", "operator": ">=", "value": 180 },
+    { "field": "spend", "operator": ">", "value": 5000 }
+  ]
+}
+
+Input: ${description}
+Output:
+`;
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Try to parse the first JSON object in the response
+    let rules = null;
+    try {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        rules = JSON.parse(match[0]);
+      } else {
+        throw new Error('No JSON found in Gemini response');
+      }
+    } catch (err) {
+      return res.status(500).json({ success: false, message: 'Failed to parse rules from Gemini', raw: text });
+    }
+
+    res.json({ success: true, rules, raw: text });
+  } catch (err) {
+    console.error('Gemini NL-to-rules error:', err);
+    res.status(500).json({ success: false, message: 'Gemini NL-to-rules error', error: err.message });
+  }
+});
+
 export default router;
