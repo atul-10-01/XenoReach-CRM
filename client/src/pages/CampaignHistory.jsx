@@ -58,7 +58,7 @@ export default function CampaignHistory() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get('/api/analytics/campaigns', {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/analytics/campaigns`, {
         params: {
           startDate: format(startDate, 'yyyy-MM-dd'),
           endDate: format(endDate, 'yyyy-MM-dd')
