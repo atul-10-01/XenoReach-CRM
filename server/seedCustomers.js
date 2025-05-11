@@ -9,7 +9,7 @@ await mongoose.connect(process.env.MONGODB_URI);
 
 async function seed() {
   try {
-    const user = await User.findOne({ email: 'atulya1202112@gmail.com' });
+    const user = await User.findOne({ email: 'atulknag@gmail.com' });
     if (!user) throw new Error('User not found!');
 
     const customers = [

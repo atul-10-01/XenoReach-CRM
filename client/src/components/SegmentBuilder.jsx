@@ -480,13 +480,13 @@ const ValueEditor = (props) => {
             onQueryChange={q => setQuery(sanitizeQuery(q))}
             controlClassnames={{
               queryBuilder: 'p-2 sm:p-4 md:p-6',
-              ruleGroup: 'bg-white p-2 sm:p-4 md:p-6 rounded border border-gray-200 my-2',
-              rule: 'flex flex-col xs:flex-row items-stretch xs:items-center gap-2 xs:gap-3',
+              ruleGroup: 'bg-blue-100 p-4 rounded-xl border border-blue-200 my-2',
+              rule: 'flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3',
               value: 'border px-2 py-1 rounded bg-white w-full sm:w-auto',
               addGroup: 'bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1 md:py-2 rounded border border-blue-200 ml-0 sm:ml-2 w-full sm:w-auto',
               addRule: 'bg-green-50 text-green-600 hover:bg-green-100 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1 md:py-2 rounded border border-green-200 ml-0 sm:ml-2 w-full sm:w-auto',
               removeGroup: 'text-red-500 hover:text-red-700 ml-0 sm:ml-2',
-              removeRule: 'text-red-500 hover:text-red-700 ml-0 sm:ml-2',
+              removeRule: '',
               combinators: 'border px-3 py-1 rounded bg-white font-medium ml-0 sm:ml-2 w-full sm:w-auto',
               fields: 'border px-2 py-1 rounded bg-white w-full sm:w-auto',
               operators: 'border px-2 py-1 rounded bg-white ml-0 sm:ml-2 min-w-[120px] w-full sm:w-auto',
@@ -496,7 +496,7 @@ const ValueEditor = (props) => {
               addGroup: '+ Add Group',
               addRule: '+ Add Rule',
               removeGroup: '×',
-              removeRule: '×',
+              removeRule: '',
               combinators: {
                 and: 'ALL of the following',
                 or: 'ANY of the following'
@@ -520,6 +520,16 @@ const ValueEditor = (props) => {
                     <option value="or">ANY of the following</option>
                   </select>
                 </div>
+              ),
+              removeRuleAction: (props) => (
+                <button
+                  type="button"
+                  onClick={props.handleOnClick}
+                  className="ml-2 p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-800 transition flex items-center justify-center shadow-sm border border-red-200"
+                  title="Delete Rule"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               ),
             }}
             createRule={createRule}
