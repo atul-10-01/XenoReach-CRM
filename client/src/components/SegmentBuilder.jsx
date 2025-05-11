@@ -6,7 +6,7 @@ import { useAuth } from '../components/AuthContext';
 import { authFetch } from '../utils/authFetch';
 import { Eye, Save, Target, AlertTriangle, Check, Trash2 } from 'lucide-react';
 
-// Define API base URL based on environment
+// API base URL (set by environment or fallback to localhost)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Operator label map for user-friendly text
@@ -21,7 +21,7 @@ const operatorMap = {
 
 const operatorObjects = Object.entries(operatorMap).map(([name, label]) => ({ name, label }));
 
-// Enhanced field definitions with tooltips and better labels
+// Field definitions for the segment builder UI
 const fields = [
   { 
     name: 'spend', 
@@ -83,17 +83,17 @@ export default function SegmentBuilder({ onSave }) {
   const [nlError, setNlError] = useState('');
   const [showSegments, setShowSegments] = useState(false);
 
-  // Custom rule factory to ensure new rules have proper default values
+  // Ensure new rules have proper default values
   const createRule = (field) => {
     const fieldDef = fields.find(f => f.name === field) || fields[0];
     return {
       field: fieldDef.name,
-      operator: fieldDef.operators[0].name, // Always a string
+      operator: fieldDef.operators[0].name,
       value: fieldDef.defaultValue || ''
     };
   };
 
-  // Defensive: ensure all operators are strings before sending to backend
+  // Ensure all operators are strings before sending to backend
   const sanitizeQuery = (q) => {
     function sanitizeNode(node) {
       if (node.rules) {
@@ -116,23 +116,18 @@ export default function SegmentBuilder({ onSave }) {
     validateQuery();
   }, [query]);
 
+  // Validate query structure and values
   const validateQuery = () => {
     const errors = [];
-    
-    // Check that at least one complete rule exists
     const hasCompleteRule = query.rules.some(rule => 
       rule.field && rule.operator && rule.value !== undefined && rule.value !== ''
     );
-    
     if (!hasCompleteRule) {
       errors.push('Please complete at least one rule');
     }
-    
-    // Validate individual rules
     query.rules.forEach((rule, index) => {
-      if (!rule.rules) { // Only check leaf rules, not groups
+      if (!rule.rules) {
         const field = fields.find(f => f.name === rule.field);
-        
         if (field?.validator && rule.value !== undefined && rule.value !== '') {
           const isValid = field.validator(rule);
           if (!isValid) {
@@ -141,11 +136,11 @@ export default function SegmentBuilder({ onSave }) {
         }
       }
     });
-    
     setValidationErrors(errors);
     return errors.length === 0;
   };
 
+  // Preview segment results from backend
   const handlePreview = async () => {
     if (!validateQuery()) {
       return;
@@ -171,6 +166,7 @@ export default function SegmentBuilder({ onSave }) {
     }
   };
 
+  // Save segment to backend
   const handleSave = async () => {
     if (!validateQuery()) {
       return;

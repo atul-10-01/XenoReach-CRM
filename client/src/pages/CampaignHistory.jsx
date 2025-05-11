@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, CartesianGrid
@@ -15,6 +14,7 @@ import { useAuth } from '../components/AuthContext';
 
 const COLORS = ['#15803d', '#EF4444', '#F59E0B'];
 
+// Tooltip for campaign analytics charts
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const campaignName = payload[0]?.payload?.name;
@@ -32,6 +32,7 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+// Preset date range button
 const DatePresetButton = ({ label, onClick, active }) => (
   <button
     onClick={onClick}
@@ -54,22 +55,25 @@ export default function CampaignHistory() {
   const [endDate, setEndDate] = useState(new Date());
   const [activePreset, setActivePreset] = useState('30d');
 
+  // Fetch campaign analytics from backend
   const fetchStats = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/analytics/campaigns`, {
-        params: {
-          startDate: format(startDate, 'yyyy-MM-dd'),
-          endDate: format(endDate, 'yyyy-MM-dd')
-        },
+      const url = `${import.meta.env.VITE_API_URL}/analytics/campaigns?startDate=${format(startDate, 'yyyy-MM-dd')}&endDate=${format(endDate, 'yyyy-MM-dd')}`;
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      setData(response.data.stats);
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Error fetching campaign stats');
+      }
+      const result = await response.json();
+      setData(result.stats);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error fetching campaign stats');
+      setError(err.message || 'Error fetching campaign stats');
       console.error('Error:', err);
     } finally {
       setLoading(false);
@@ -80,6 +84,7 @@ export default function CampaignHistory() {
     fetchStats();
   }, [startDate, endDate]);
 
+  // Handle preset date range selection
   const handlePresetClick = (preset) => {
     setActivePreset(preset);
     const now = new Date();
@@ -99,8 +104,8 @@ export default function CampaignHistory() {
     setEndDate(now);
   };
 
+  // Export analytics as CSV (table, charts, pie)
   const handleExportCSV = () => {
-    // Prepare CSV for campaign stats table
     const tableHeaders = ['Campaign', 'Segment', 'Total', 'Sent', 'Failed', 'Pending', 'Success Rate (%)'];
     const tableRows = data.map(row => [
       row.name,
@@ -114,23 +119,15 @@ export default function CampaignHistory() {
     let csvContent = 'Campaign Analytics Table\n';
     csvContent += tableHeaders.join(',') + '\n';
     csvContent += tableRows.map(r => r.join(',')).join('\n') + '\n\n';
-
-    // Success Rate Over Time (Line Chart)
     csvContent += 'Success Rate Over Time (Line Chart)\n';
     csvContent += 'Index,Campaign,Success Rate (%)\n';
     csvContent += data.map((row, i) => `${i + 1},${row.name},${row.successRate}`).join('\n') + '\n\n';
-
-    // Message Status Distribution (Bar Chart)
     csvContent += 'Message Status Distribution (Bar Chart)\n';
     csvContent += 'Index,Campaign,Sent,Failed,Pending\n';
     csvContent += data.map((row, i) => `${i + 1},${row.name},${row.sent},${row.failed},${row.pending}`).join('\n') + '\n\n';
-
-    // Pie Chart Data
     csvContent += 'Overall Message Status (Pie Chart)\n';
     csvContent += 'Status,Count\n';
     csvContent += pieData.map(d => `${d.name},${d.value}`).join('\n') + '\n';
-
-    // Download as CSV
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -156,7 +153,7 @@ export default function CampaignHistory() {
     );
   }
 
-  // Calculate total stats for pie chart
+  // Aggregate stats for pie chart
   const totalStats = data.reduce((acc, campaign) => ({
     sent: acc.sent + campaign.sent,
     failed: acc.failed + campaign.failed,
@@ -169,7 +166,7 @@ export default function CampaignHistory() {
     { name: 'Pending', value: totalStats.pending }
   ];
 
-  // When preparing data for charts, add an index property and ensure name/segmentName are present
+  // Add index and ensure name/segmentName for chart data
   const dataWithIndex = data.map((campaign, i) => ({
     ...campaign,
     name: campaign.name || '-',

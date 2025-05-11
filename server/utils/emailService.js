@@ -3,22 +3,21 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Create a transporter using Gmail SMTP
+// Configure Nodemailer transporter for Gmail SMTP
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_APP_PASSWORD
   },
-  // Add these settings to improve deliverability
-  pool: true, // Use pooled connections
+  pool: true, // Use pooled connections for better performance
   maxConnections: 5,
   maxMessages: 100,
-  rateDelta: 1000, // 1 second
-  rateLimit: 5 // 5 messages per second
+  rateDelta: 1000, // 1 second between batches
+  rateLimit: 5 // Max 5 messages per second
 });
 
-// Function to create HTML email template
+// Generate a simple HTML email template
 const createEmailTemplate = (message) => {
   return `
     <!DOCTYPE html>
@@ -40,7 +39,7 @@ const createEmailTemplate = (message) => {
   `;
 };
 
-// Function to send a single email
+// Send a single email
 export const sendEmail = async (to, subject, text) => {
   try {
     const mailOptions = {
@@ -54,8 +53,8 @@ export const sendEmail = async (to, subject, text) => {
       html: createEmailTemplate(text), // HTML version
       headers: {
         'X-Entity-Ref-ID': Date.now().toString(), // Unique ID for each email
-        'List-Unsubscribe': `<mailto:${process.env.EMAIL_USER}?subject=unsubscribe>`, // Unsubscribe header
-        'Precedence': 'bulk', // Indicates bulk email
+        'List-Unsubscribe': `<mailto:${process.env.EMAIL_USER}?subject=unsubscribe>`,
+        'Precedence': 'bulk', // Mark as bulk email
         'X-Auto-Response-Suppress': 'OOF, AutoReply' // Suppress auto-replies
       },
       priority: 'normal',
@@ -71,11 +70,11 @@ export const sendEmail = async (to, subject, text) => {
   }
 };
 
-// Function to send campaign emails in batches
+// Send campaign emails in batches to avoid rate limits
 export const sendCampaignEmails = async (customers, campaign) => {
   const results = [];
-  const batchSize = 5; // Reduced batch size for better deliverability
-  const delayBetweenBatches = 2000; // 2 seconds delay between batches
+  const batchSize = 5;
+  const delayBetweenBatches = 2000; // 2 seconds
 
   for (let i = 0; i < customers.length; i += batchSize) {
     const batch = customers.slice(i, i + batchSize);
@@ -90,7 +89,7 @@ export const sendCampaignEmails = async (customers, campaign) => {
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
 
-    // Add delay between batches to avoid rate limits
+    // Wait between batches to avoid hitting provider rate limits
     if (i + batchSize < customers.length) {
       await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
     }
