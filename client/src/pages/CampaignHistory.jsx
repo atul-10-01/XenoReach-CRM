@@ -177,9 +177,9 @@ export default function CampaignHistory() {
   return (
     <div id="campaign-dashboard-export" className="p-2 sm:p-4 md:p-8 bg-gray-50 min-h-screen w-full">
       <div className="max-w-7xl mx-auto w-full">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-8 gap-2 md:gap-4">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-8 gap-4 md:gap-4">
           <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-gray-900 flex items-center gap-2"><BarChart2 className="inline-block text-blue-600" size={28} /> Campaign Analytics</h1>
-          <div className="flex flex-col sm:flex-row gap-2 md:gap-4 relative">
+          <div className="flex pt-4 flex-col sm:flex-row gap-2 md:gap-4 relative">
             <button
               onClick={handleExportCSV}
               className="p-2 bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition flex items-center justify-center shadow-sm"
@@ -206,7 +206,7 @@ export default function CampaignHistory() {
                 active={activePreset === '30d'}
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-4">
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Start Date"

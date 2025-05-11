@@ -262,23 +262,27 @@ export default function SegmentBuilder({ onSave }) {
     );
   };
 
-  // Custom value editor for number inputs
-  const ValueEditor = (props) => {
-    const field = fields.find(f => f.name === props.field);
-    const inputType = field?.inputType || 'text';
-    const defaultValue = field?.defaultValue || '';
 
-    return (
-      <input
-        type={inputType}
-        value={props.value ?? defaultValue}
-        onChange={e => props.handleOnChange(e.target.value)}
-        className="border px-2 py-1 rounded bg-white w-full sm:w-32 block"
-        placeholder={defaultValue}
-      />
-    );
-  };
+// Simple, reliable value editor for text and number inputs
+const ValueEditor = (props) => {
+  const field = fields.find(f => f.name === props.field);
+  const inputType = field?.inputType || 'text';
+  const isNumber = inputType === 'number';
 
+  return (
+    <input
+      type="text"  // Using text type for all inputs for consistent behavior
+      value={props.value === undefined || props.value === null ? '' : props.value}
+      onChange={(e) => props.handleOnChange(e.target.value)}
+      className="border px-2 py-1 rounded bg-white w-full sm:w-32 block"
+      placeholder={field?.defaultValue ?? ''}
+      autoComplete="off"
+      // Use inputMode for mobile keyboard hints without the browser behaviors of type="number"
+      inputMode={isNumber ? 'numeric' : undefined}
+      // Let validation happen at the parent level instead of in this component
+    />
+  );
+};
   // Custom rendering for field selector with tooltips and better labels
   const FieldSelector = (props) => {
     const fieldOptions = props.options || [];
@@ -477,7 +481,7 @@ export default function SegmentBuilder({ onSave }) {
             controlClassnames={{
               queryBuilder: 'p-2 sm:p-4 md:p-6',
               ruleGroup: 'bg-white p-2 sm:p-4 md:p-6 rounded border border-gray-200 my-2',
-              rule: 'p-2 border-l-4 border-blue-200 bg-blue-50 my-2 rounded flex flex-col sm:flex-row items-stretch sm:items-center gap-2',
+              rule: 'flex flex-col xs:flex-row items-stretch xs:items-center gap-2 xs:gap-3',
               value: 'border px-2 py-1 rounded bg-white w-full sm:w-auto',
               addGroup: 'bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1 md:py-2 rounded border border-blue-200 ml-0 sm:ml-2 w-full sm:w-auto',
               addRule: 'bg-green-50 text-green-600 hover:bg-green-100 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1 md:py-2 rounded border border-green-200 ml-0 sm:ml-2 w-full sm:w-auto',

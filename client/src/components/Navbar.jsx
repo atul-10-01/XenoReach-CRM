@@ -64,7 +64,7 @@ export default function Navbar() {
                 className="h-13 transition duration-300 ease-in-out transform hover:brightness-150 hover:drop-shadow-md"
               />
             </button>
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden lg:flex items-center gap-6">
               {user && (
                 <>
                   <Link to="/segments" className={`text-gray-700 hover:text-blue-800 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/segments' ? 'border-gray-800' : 'border-transparent'}`}>Segment Builder</Link>
@@ -88,7 +88,7 @@ export default function Navbar() {
               )}
             </div>
             {/* Hamburger for mobile */}
-            <div className="md:hidden flex items-center">
+            <div className="lg:hidden flex items-center">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 focus:outline-none"
@@ -106,7 +106,7 @@ export default function Navbar() {
           </div>
           {/* Mobile menu */}
           {menuOpen && (
-            <div className="md:hidden bg-white shadow rounded-lg mt-2 p-4 flex flex-col gap-4">
+            <div className="lg:hidden bg-white shadow rounded-lg mt-2 p-4 flex flex-col gap-4">
               {user && (
                 <>
                   <Link to="/segments" className={`text-gray-700 hover:text-blue-600 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/segments' ? 'border-gray-800' : 'border-transparent'}`} onClick={() => setMenuOpen(false)}>Segment Builder</Link>
