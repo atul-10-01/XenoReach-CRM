@@ -3,11 +3,13 @@ import { useAuth } from '../components/AuthContext';
 import { authFetch } from '../utils/authFetch';
 import { toast } from 'react-hot-toast';
 import { Send, Sparkles } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const CampaignCreator = forwardRef((props, ref) => {
   const { token } = useAuth();
+  const location = useLocation();
   const [segments, setSegments] = useState([]);
   const [selectedSegment, setSelectedSegment] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -24,6 +26,14 @@ const CampaignCreator = forwardRef((props, ref) => {
   useEffect(() => {
     fetchSegments();
   }, []);
+
+  // If navigated with a segment, pre-select it
+  useEffect(() => {
+    if (location.state && location.state.segment) {
+      const seg = location.state.segment;
+      setSelectedSegment(seg.id || seg._id || '');
+    }
+  }, [location.state]);
 
   const fetchSegments = async () => {
     try {

@@ -25,15 +25,7 @@ XenoReach-CRM enables businesses to:
 
 ## Architecture Diagram
 
-```mermaid
-graph TD
-  A[Frontend (React + Vite)] -- REST API --> B[Backend (Node.js/Express)]
-  B -- MongoDB --> C[(Database)]
-  B -- Google Gemini API --> D[AI Services]
-  B -- SMTP (Nodemailer) --> E[Email Delivery]
-  A -- Auth (JWT/Google) --> B
-  B -- Swagger Docs --> F[API Docs]
-```
+![XenoReach CRM Architecture](client/src/assets/diagram.png)
 
 ---
 

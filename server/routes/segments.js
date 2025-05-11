@@ -182,4 +182,20 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * Delete a segment by ID
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const segment = await Segment.findOneAndDelete({ _id: req.params.id, createdBy: req.user._id });
+    if (!segment) {
+      return res.status(404).json({ success: false, message: 'Segment not found' });
+    }
+    res.json({ success: true, message: 'Segment deleted' });
+  } catch (err) {
+    console.error('Delete segment error:', err);
+    res.status(500).json({ success: false, message: 'Error deleting segment', error: err.message });
+  }
+});
+
 export default router;

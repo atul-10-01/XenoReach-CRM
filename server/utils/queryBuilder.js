@@ -82,13 +82,23 @@ export function buildMongoQuery(node) {
   export function validateQuery(query) {
     const errors = [];
     function validateNode(node) {
-      if (node.combinator && Array.isArray(node.rules)) {
+      if (!node || typeof node !== 'object') {
+        errors.push('Invalid rule node: not an object');
+        return;
+      }
+      if (node.combinator !== undefined || node.rules !== undefined) {
+        // Group node
+        if (typeof node.combinator !== 'string' || !Array.isArray(node.rules)) {
+          errors.push('Invalid group node: missing combinator or rules array');
+          return;
+        }
         if (!['and', 'or'].includes(node.combinator)) {
           errors.push(`Invalid combinator: ${node.combinator}`);
         }
         node.rules.forEach(validateNode);
         return;
       }
+      // Rule node
       const { field, operator, value } = node;
       if (!field) errors.push('Missing field in rule');
       if (!operator) errors.push(`Missing operator for field: ${field}`);
@@ -111,7 +121,11 @@ export function buildMongoQuery(node) {
         }
       }
     }
-    validateNode(query);
+    if (!query || typeof query !== 'object') {
+      errors.push('Invalid query: not an object');
+    } else {
+      validateNode(query);
+    }
     return errors;
   }
   

@@ -5,6 +5,7 @@ import 'react-querybuilder/dist/query-builder.css';
 import { useAuth } from '../components/AuthContext';
 import { authFetch } from '../utils/authFetch';
 import { Eye, Save, Target, AlertTriangle, Check, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // API base URL (set by environment or fallback to localhost)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -82,6 +83,11 @@ export default function SegmentBuilder({ onSave }) {
   const [nlLoading, setNlLoading] = useState(false);
   const [nlError, setNlError] = useState('');
   const [showSegments, setShowSegments] = useState(false);
+  const [previewedSegmentId, setPreviewedSegmentId] = useState(null);
+  const [segmentPreview, setSegmentPreview] = useState({});
+  const [segmentPreviewLoading, setSegmentPreviewLoading] = useState(false);
+  const [segmentPreviewError, setSegmentPreviewError] = useState('');
+  const navigate = useNavigate();
 
   // Ensure new rules have proper default values
   const createRule = (field) => {
@@ -345,6 +351,34 @@ export default function SegmentBuilder({ onSave }) {
       setError('Failed to delete segment');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch preview for a saved segment
+  const handlePreviewSavedSegment = async (segment) => {
+    setPreviewedSegmentId(segment.id || segment._id);
+    setSegmentPreviewLoading(true);
+    setSegmentPreviewError('');
+    setSegmentPreview({});
+    try {
+      const res = await authFetch(
+        `${API_BASE_URL}/segments/preview`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ rules: segment.rules })
+        },
+        token
+      );
+      const data = await res.json();
+      if (data.success) {
+        setSegmentPreview(data);
+      } else {
+        setSegmentPreviewError(data.message || 'Failed to preview segment');
+      }
+    } catch (err) {
+      setSegmentPreviewError('Failed to preview segment');
+    } finally {
+      setSegmentPreviewLoading(false);
     }
   };
 
@@ -613,7 +647,12 @@ export default function SegmentBuilder({ onSave }) {
           ) : (
             <div className="space-y-3">
               {savedSegments.map(segment => (
-                <div key={segment.id || segment._id} className="bg-white p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div
+                  key={segment.id || segment._id}
+                  className="bg-white hover:bg-gray-100 transition-colors p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center cursor-pointer"
+                  onClick={() => navigate('/campaigns', { state: { segment } })}
+                  style={{ transition: 'background 0.2s' }}
+                >
                   <div>
                     <h4 className="font-medium text-base sm:text-lg md:text-xl">{segment.name}</h4>
                     <span className="text-xs sm:text-sm md:text-base text-gray-500">
@@ -627,7 +666,28 @@ export default function SegmentBuilder({ onSave }) {
                     </p>
                   </div>
                   <button
-                    onClick={() => handleDeleteSegment(segment.id || segment._id)}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setLoading(true);
+                      setError('');
+                      try {
+                        const res = await authFetch(
+                          `${API_BASE_URL}/segments/${segment.id || segment._id}`,
+                          { method: 'DELETE' },
+                          token
+                        );
+                        const data = await res.json();
+                        if (data.success) {
+                          setSavedSegments(prev => prev.filter(seg => (seg.id || seg._id) !== (segment.id || segment._id)));
+                        } else {
+                          setError(data.message || 'Failed to delete segment');
+                        }
+                      } catch (err) {
+                        setError('Failed to delete segment');
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
                     className="ml-0 sm:ml-4 mt-2 sm:mt-0 px-4 py-2 rounded-full bg-red-50 text-red-700 flex items-center text-xs font-semibold border border-red-200 hover:bg-red-100 transition shadow-sm"
                     title="Delete Segment"
                   >

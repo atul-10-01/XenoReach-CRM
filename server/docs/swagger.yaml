@@ -17,18 +17,44 @@ components:
       type: object
       properties:
         id: { type: string }
+        googleId: { type: string, nullable: true }
         name: { type: string }
         email: { type: string }
-        role: { type: string }
+        password: { type: string, nullable: true }
+        role: { type: string, enum: [user, admin] }
+        createdAt: { type: string, format: date-time }
+        isVerified: { type: boolean }
+        verificationToken: { type: string, nullable: true }
+        resetPasswordToken: { type: string, nullable: true }
+        resetPasswordExpires: { type: string, format: date-time, nullable: true }
     Customer:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
         email: { type: string }
+        phone: { type: string, nullable: true }
         spend: { type: number }
         visits: { type: integer }
         lastOrderDate: { type: string, format: date-time }
+        firstOrderDate: { type: string, format: date-time, nullable: true }
+        tags:
+          type: array
+          items: { type: string }
+        location:
+          type: object
+          properties:
+            city: { type: string, nullable: true }
+            state: { type: string, nullable: true }
+            country: { type: string, nullable: true }
+        deviceType: { type: string, enum: [mobile, desktop, tablet, unknown] }
+        acquisitionSource: { type: string, nullable: true }
+        segments:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        createdBy: { type: string }
     Order:
       type: object
       properties:
@@ -44,14 +70,23 @@ components:
               qty: { type: integer }
               price: { type: number }
         orderDate: { type: string, format: date-time }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     Segment:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
+        description: { type: string, nullable: true }
         rules: { type: object }
+        mongoQuery: { type: object, nullable: true }
         customerCount: { type: integer }
+        isActive: { type: boolean }
+        lastRun: { type: string, format: date-time, nullable: true }
+        createdBy: { type: string }
         createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     Campaign:
       type: object
       properties:
@@ -59,16 +94,24 @@ components:
         name: { type: string }
         message: { type: string }
         segmentId: { type: string }
+        sentAt: { type: string, format: date-time }
         customerCount: { type: integer }
-        status: { type: string }
+        status: { type: string, enum: [draft, sent, failed] }
+        error: { type: string, nullable: true }
+        createdBy: { type: string }
         createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     CommLog:
       type: object
       properties:
+        id: { type: string }
         campaignId: { type: string }
         customerId: { type: string }
-        status: { type: string }
-        sentAt: { type: string, format: date-time }
+        status: { type: string, enum: [PENDING, SENT, FAILED] }
+        error: { type: string, nullable: true }
+        sentAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     GeminiSuggestRequest:
       type: object
       properties:
