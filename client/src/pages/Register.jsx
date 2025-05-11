@@ -53,7 +53,7 @@ export default function Register() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="flex flex-col min-h-[80vh] bg-gradient-to-br from-green-50 to-blue-50 justify-center items-center py-8">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm flex flex-col items-center">
         <h1 className="text-2xl font-bold mb-6 text-gray-900">Create your XenoReach CRM account</h1>
         <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>

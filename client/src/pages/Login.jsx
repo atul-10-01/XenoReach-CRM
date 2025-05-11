@@ -52,7 +52,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+    <div className="flex flex-col min-h-[80vh] bg-gradient-to-br from-blue-50 to-green-50 justify-center items-center py-8">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm flex flex-col items-center">
         <h1 className="text-2xl font-bold mb-6 text-gray-900">Sign in to XenoReach CRM</h1>
         <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
