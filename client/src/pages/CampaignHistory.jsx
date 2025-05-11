@@ -19,10 +19,10 @@ const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const campaignName = payload[0]?.payload?.name;
     return (
-      <div className="bg-white p-4 rounded-lg shadow-lg border">
-        <p className="font-bold text-lg text-blue-700 mb-1">{campaignName}</p>
+      <div className="bg-white p-2 sm:p-4 rounded-lg shadow-lg border max-w-[200px] sm:max-w-xs text-xs sm:text-sm break-words">
+        <p className="font-bold text-blue-700 mb-1 truncate">{campaignName}</p>
         {payload.map((entry, index) => (
-          <p key={index} style={{ color: entry.color }}>
+          <p key={index} style={{ color: entry.color }} className="truncate">
             {entry.name}: {entry.value}{entry.unit || ''}
           </p>
         ))}
@@ -274,9 +274,9 @@ export default function CampaignHistory() {
 
           {/* Message Status Distribution Pie Chart */}
           <div className="bg-white p-2 sm:p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-4 text-gray-800">Overall Message Status</h2>
-            <div className="flex flex-col items-center justify-center h-[220px] sm:h-[340px] md:h-[360px]">
-              <div style={{ height: '140px', width: '100%' }} className="sm:h-[220px] md:h-[220px]">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-1 text-gray-800">Overall Message Status</h2>
+            <div className="flex flex-col items-center justify-center" style={{ minHeight: '220px', minWidth: '220px', height: '370px', width: '100%' }}>
+              <div style={{ height: '220px', minWidth: '220px', width: '100%' }} className="sm:h-[320px] md:h-[360px]">
                 <ResponsivePie
                   data={pieData.map((d, i) => ({
                     id: d.name,
@@ -291,11 +291,12 @@ export default function CampaignHistory() {
                   colors={COLORS}
                   enableArcLabels={true}
                   arcLabelsSkipAngle={0}
-                  arcLabelsTextColor="#fff"
+                  arcLabelsRadiusOffset={0.55}
+                  arcLabelsTextColor="white"
                   arcLabel={d => d.value > 0 ? `${((d.value / pieData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(0)}%` : ''}
                   enableArcLinkLabels={false}
                   tooltip={({ datum }) => (
-                    <div className="bg-white p-3 rounded-lg shadow-lg border text-sm">
+                    <div className="bg-white p-2 sm:p-3 rounded-lg shadow-lg border text-xs sm:text-sm max-w-[200px] sm:max-w-xs">
                       <span className="font-semibold" style={{ color: datum.color }}>{datum.id}</span>
                       <div className="mt-1">Count: <b>{datum.value}</b></div>
                       <div>Percent: <b>{datum.formattedValue && datum.data.value > 0 ? ((datum.value / pieData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1) : 0}%</b></div>

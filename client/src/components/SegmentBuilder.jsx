@@ -4,7 +4,7 @@ import { QueryBuilder, formatQuery } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
 import { useAuth } from '../components/AuthContext';
 import { authFetch } from '../utils/authFetch';
-import { Eye, Save, Target, AlertTriangle, Check } from 'lucide-react';
+import { Eye, Save, Target, AlertTriangle, Check, Trash2 } from 'lucide-react';
 
 // Define API base URL based on environment
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -81,6 +81,7 @@ export default function SegmentBuilder({ onSave }) {
   const [nlInput, setNlInput] = useState('');
   const [nlLoading, setNlLoading] = useState(false);
   const [nlError, setNlError] = useState('');
+  const [showSegments, setShowSegments] = useState(false);
 
   // Custom rule factory to ensure new rules have proper default values
   const createRule = (field) => {
@@ -196,6 +197,7 @@ export default function SegmentBuilder({ onSave }) {
       if (data.success) {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
+        setSavedSegments(prev => [data.segment, ...prev]);
         if (onSave) {
           onSave(data.segment);
         }
@@ -326,15 +328,56 @@ export default function SegmentBuilder({ onSave }) {
     return `Customers who match ${mainCombinator} of these conditions: ${ruleExplanations.join(', ')}`;
   };
 
+  // Add delete handler
+  const handleDeleteSegment = async (segmentId) => {
+    if (!window.confirm('Are you sure you want to delete this segment?')) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await authFetch(
+        `${API_BASE_URL}/segments/${segmentId}`,
+        { method: 'DELETE' },
+        token
+      );
+      const data = await res.json();
+      if (data.success) {
+        setSavedSegments(prev => prev.filter(seg => seg.id !== segmentId));
+      } else {
+        setError(data.message || 'Failed to delete segment');
+      }
+    } catch (err) {
+      setError('Failed to delete segment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchSegments = async () => {
+      try {
+        const res = await authFetch(`${API_BASE_URL}/segments`, {}, token);
+        const data = await res.json();
+        if (data.success && data.segments) {
+          setSavedSegments(data.segments);
+        }
+      } catch (err) {
+        // Optionally handle error
+      }
+    };
+    fetchSegments();
+  }, [token]);
+
   return (
-    <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto p-2 sm:p-4 md:p-6 lg:p-8 bg-white rounded-2xl shadow-lg">
+    <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto p-2 sm:p-4 md:p-6 lg:p-8 bg-white rounded-2xl shadow-lg relative">
+      {/* Top bar with title and show saved segments button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
         <h2 className="text-lg sm:text-xl font-semibold">Define Audience Segment</h2>
-        <button 
-          onClick={() => setShowHelp(!showHelp)}
-          className="text-blue-500 hover:text-blue-700 text-xs sm:text-sm md:text-base"
+        <button
+          onClick={() => setShowSegments(!showSegments)}
+          className={`inline-flex items-center gap-2 px-4 py-2 border-2 border-blue-500 text-blue-700 font-semibold rounded-lg bg-white hover:bg-blue-50 transition shadow-sm ${showSegments ? 'bg-blue-50 border-blue-700' : ''}`}
         >
-          {showHelp ? 'Hide Help' : 'Need Help?'}
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+          {showSegments ? 'Hide Saved Segments' : 'Show Saved Segments'}
         </button>
       </div>
       
@@ -566,28 +609,38 @@ export default function SegmentBuilder({ onSave }) {
         </div>
       )}
 
-      {/* Display saved segments */}
-      {savedSegments.length > 0 && (
+      {showSegments && (
         <div className="mt-6">
           <h3 className="text-base sm:text-lg md:text-xl font-medium mb-3">Saved Segments</h3>
-          <div className="space-y-3">
-            {savedSegments.map(segment => (
-              <div key={segment.id} className="bg-white p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200 shadow-sm">
-                <div className="flex flex-col sm:flex-row md:flex-row justify-between items-start sm:items-center md:items-center">
-                  <h4 className="font-medium text-base sm:text-lg md:text-xl">{segment.name}</h4>
-                  <span className="text-xs sm:text-sm md:text-base text-gray-500">
-                    {segment.customerCount.toLocaleString()} customers
-                  </span>
+          {savedSegments.length === 0 ? (
+            <div className="p-4 text-gray-500 text-center bg-gray-50 rounded-lg border border-gray-100">No saved segments yet.</div>
+          ) : (
+            <div className="space-y-3">
+              {savedSegments.map(segment => (
+                <div key={segment.id || segment._id} className="bg-white p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <div>
+                    <h4 className="font-medium text-base sm:text-lg md:text-xl">{segment.name}</h4>
+                    <span className="text-xs sm:text-sm md:text-base text-gray-500">
+                      {segment.customerCount?.toLocaleString?.() ?? 0} customers
+                    </span>
+                    <p className="text-xs sm:text-sm md:text-base text-gray-600 mt-1">
+                      {getSegmentExplanation(segment.rules)}
+                    </p>
+                    <p className="text-xs sm:text-sm md:text-base text-gray-400 mt-2">
+                      Created {typeof segment.createdAt === 'string' ? new Date(segment.createdAt).toLocaleString() : ''}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteSegment(segment.id || segment._id)}
+                    className="ml-0 sm:ml-4 mt-2 sm:mt-0 px-4 py-2 rounded-full bg-red-50 text-red-700 flex items-center text-xs font-semibold border border-red-200 hover:bg-red-100 transition shadow-sm"
+                    title="Delete Segment"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" /> Delete
+                  </button>
                 </div>
-                <p className="text-xs sm:text-sm md:text-base text-gray-600 mt-1">
-                  {getSegmentExplanation(segment.rules)}
-                </p>
-                <p className="text-xs sm:text-sm md:text-base text-gray-400 mt-2">
-                  Created {segment.createdAt.toLocaleString()}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

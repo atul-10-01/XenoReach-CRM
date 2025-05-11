@@ -67,9 +67,9 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-6">
               {user && (
                 <>
-                  <Link to="/segments" className="text-gray-700 hover:text-blue-800 hover:underline font-medium">Segment Builder</Link>
-                  <Link to="/campaigns" className="text-gray-700 hover:text-blue-800 hover:underline  font-medium">Campaign Creator</Link>
-                  <Link to="/history" className="text-gray-700 hover:text-blue-800 hover:underline  font-medium">Campaign History</Link>
+                  <Link to="/segments" className={`text-gray-700 hover:text-blue-800 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/segments' ? 'border-gray-800' : 'border-transparent'}`}>Segment Builder</Link>
+                  <Link to="/campaigns" className={`text-gray-700 hover:text-blue-800 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/campaigns' ? 'border-gray-800' : 'border-transparent'}`}>Campaign Creator</Link>
+                  <Link to="/history" className={`text-gray-700 hover:text-blue-800 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/history' ? 'border-gray-800' : 'border-transparent'}`}>Campaign History</Link>
                 </>
               )}
               {!user && (
@@ -109,9 +109,9 @@ export default function Navbar() {
             <div className="md:hidden bg-white shadow rounded-lg mt-2 p-4 flex flex-col gap-4">
               {user && (
                 <>
-                  <Link to="/segments" className="text-gray-700 hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Segment Builder</Link>
-                  <Link to="/campaigns" className="text-gray-700 hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Campaign Creator</Link>
-                  <Link to="/history" className="text-gray-700 hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Campaign History</Link>
+                  <Link to="/segments" className={`text-gray-700 hover:text-blue-600 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/segments' ? 'border-gray-800' : 'border-transparent'}`} onClick={() => setMenuOpen(false)}>Segment Builder</Link>
+                  <Link to="/campaigns" className={`text-gray-700 hover:text-blue-600 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/campaigns' ? 'border-gray-800' : 'border-transparent'}`} onClick={() => setMenuOpen(false)}>Campaign Creator</Link>
+                  <Link to="/history" className={`text-gray-700 hover:text-blue-600 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/history' ? 'border-gray-800' : 'border-transparent'}`} onClick={() => setMenuOpen(false)}>Campaign History</Link>
                 </>
               )}
               {!user && (
@@ -132,16 +132,6 @@ export default function Navbar() {
           )}
         </div>
       </nav>
-      {/* Section indicator line */}
-      {user && sectionLabel && (
-        <div className="w-full bg-gradient-to-r from-blue-100 to-green-100 border-b border-blue-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center">
-            <span className="text-blue-700 font-semibold text-base md:text-lg tracking-wide bg-white px-4 py-1 rounded-full shadow border border-blue-200">
-              {sectionLabel}
-            </span>
-          </div>
-        </div>
-      )}
     </>
   );
 } 
