@@ -11,6 +11,8 @@ export default function Register() {
   const [name, setName] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [registerMsg, setRegisterMsg] = useState('');
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -35,18 +37,20 @@ export default function Register() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    setRegistered(false);
+    setRegisterMsg('');
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })
       });
-      if (!res.ok) throw new Error('Registration failed');
       const data = await res.json();
-      login(data.token, data.user);
-      navigate('/segments');
+      if (!res.ok) throw new Error(data.message || 'Registration failed');
+      setRegistered(true);
+      setRegisterMsg('Registration successful! Please check your email to verify your account.');
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -56,6 +60,9 @@ export default function Register() {
     <div className="flex flex-col min-h-[80vh] bg-gradient-to-br from-green-50 to-blue-50 justify-center items-center py-8">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm flex flex-col items-center">
         <h1 className="text-2xl font-bold mb-6 text-gray-900">Create your XenoReach CRM account</h1>
+        {registered ? (
+          <div className="text-green-600 text-center">{registerMsg}</div>
+        ) : (
         <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
             type="text"
@@ -89,6 +96,7 @@ export default function Register() {
             {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
+        )}
         <div className="my-4 w-full flex items-center">
           <div className="flex-grow border-t border-gray-200"></div>
           <span className="mx-2 text-gray-400 text-xs">or</span>

@@ -10,6 +10,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showResend, setShowResend] = useState(false);
+  const [resendStatus, setResendStatus] = useState('idle');
+  const [resendMsg, setResendMsg] = useState('');
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -34,20 +37,75 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    setShowResend(false);
+    setResendStatus('idle');
+    setResendMsg('');
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      if (!res.ok) throw new Error('Invalid credentials');
       const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 403 && data.message && data.message.toLowerCase().includes('verify')) {
+          setShowResend(true);
+          setError('Your email is not verified. Please check your inbox.');
+          // Auto-resend verification email and show result
+          try {
+            const resendRes = await fetch(`${import.meta.env.VITE_API_URL}/auth/resend-verification`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email })
+            });
+            const resendData = await resendRes.json();
+            if (resendRes.ok) {
+              setResendStatus('success');
+              setResendMsg('Verification email resent!');
+            } else {
+              setResendStatus('error');
+              setResendMsg(resendData.message || 'Failed to resend verification email.');
+            }
+          } catch {
+            setResendStatus('error');
+            setResendMsg('Failed to resend verification email.');
+          }
+        } else if (res.status === 400 && data.message && data.message.toLowerCase().includes('invalid')) {
+          setError('Invalid email or password.');
+        } else {
+          setError(data.message || 'Login failed.');
+        }
+        return;
+      }
       login(data.token, data.user);
       navigate('/segments');
     } catch (err) {
-      setError('Invalid email or password.');
+      setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendStatus('loading');
+    setResendMsg('');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResendStatus('success');
+        setResendMsg('Verification email resent!');
+      } else {
+        setResendStatus('error');
+        setResendMsg(data.message || 'Failed to resend verification email.');
+      }
+    } catch {
+      setResendStatus('error');
+      setResendMsg('Failed to resend verification email.');
     }
   };
 
@@ -94,6 +152,21 @@ export default function Login() {
           Don't have an account?{' '}
           <Link to="/register" className="text-blue-600 hover:underline">Register</Link>
         </div>
+        <div className="w-full flex justify-end mt-2">
+          <Link to="/reset-password-request" className="text-xs text-blue-600 hover:underline">Forgot password?</Link>
+        </div>
+        {showResend && (
+          <div className="mt-4 w-full flex flex-col items-center">
+            <button
+              onClick={handleResend}
+              className="bg-yellow-500 text-white rounded-lg py-2 px-4 font-semibold hover:bg-yellow-600 transition"
+              disabled={resendStatus === 'loading'}
+            >
+              {resendStatus === 'loading' ? 'Resending...' : 'Resend Verification Email'}
+            </button>
+            {resendMsg && <div className={`mt-2 text-sm ${resendStatus === 'success' ? 'text-green-600' : 'text-red-600'}`}>{resendMsg}</div>}
+          </div>
+        )}
         {error && <div className="mt-4 text-red-600 text-sm">{error}</div>}
       </div>
     </div>

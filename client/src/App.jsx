@@ -11,6 +11,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Landing from './components/Landing';
 import Register from './pages/Register';
 import Navbar from './components/Navbar';
+import VerifyEmail from './pages/VerifyEmail';
+import ResetPasswordRequest from './pages/ResetPasswordRequest';
+import ResetPassword from './pages/ResetPassword';
 
 export default function App() {
   return (
@@ -25,6 +28,9 @@ export default function App() {
             <Route path="/segments" element={<ProtectedRoute><SegmentBuilder /></ProtectedRoute>} />
             <Route path="/campaigns" element={<ProtectedRoute><CampaignCreator /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><CampaignHistory /></ProtectedRoute>} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/reset-password-request" element={<ResetPasswordRequest />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
         </main>
         <Toaster position="top-right" />
