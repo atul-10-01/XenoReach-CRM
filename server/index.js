@@ -20,6 +20,7 @@ const app = express();
 // Middlewares
 const allowedOrigins = [
   'https://xeno-reach-crm.vercel.app',
+  'https://xeno-reach-crm-atul-nags-projects.vercel.app',
   'http://localhost:5173'
 ];
 
