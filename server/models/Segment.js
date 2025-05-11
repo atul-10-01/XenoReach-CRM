@@ -5,7 +5,6 @@ const SegmentSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true,
     trim: true
   },
   description: {
@@ -47,6 +46,9 @@ const SegmentSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Add compound unique index for user and name
+SegmentSchema.index({ createdBy: 1, name: 1 }, { unique: true });
 
 // Pre-save hook to update the updatedAt field
 SegmentSchema.pre('save', function(next) {

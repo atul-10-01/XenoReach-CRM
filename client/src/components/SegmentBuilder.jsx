@@ -183,6 +183,8 @@ export default function SegmentBuilder({ onSave }) {
     }
     setLoading(true);
     setError('');
+    // Debug log for token
+    console.log('[DEBUG] Token used for save segment:', token);
     try {
       const res = await authFetch(
         `${API_BASE_URL}/segments`,
