@@ -66,7 +66,7 @@ XenoReach-CRM enables businesses to:
 
 ### 1. Clone the Repository
 ```bash
-git clone <repo-url>
+git clone https://github.com/atul-10-01/XenoReach-CRM.git
 cd XenoReach-CRM
 ```
 
@@ -154,5 +154,3 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 ---
 
-## License
-[MIT](LICENSE) 
