@@ -14,6 +14,7 @@ import Navbar from './components/Navbar';
 import VerifyEmail from './pages/VerifyEmail';
 import ResetPasswordRequest from './pages/ResetPasswordRequest';
 import ResetPassword from './pages/ResetPassword';
+import ImportCustomers from './pages/ImportCustomers';
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/reset-password-request" element={<ResetPasswordRequest />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/import-customers" element={<ImportCustomers />} />
           </Routes>
         </main>
         <Toaster position="top-right" />

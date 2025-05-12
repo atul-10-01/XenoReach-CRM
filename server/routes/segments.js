@@ -87,14 +87,14 @@ router.post('/', async (req, res) => {
       });
     }
     
-    // Build MongoDB query for reference
+    // Build MongoDB query for reference (do NOT include createdBy)
     const mongoQuery = buildMongoQuery(rules);
     
     // Create new segment
     const segment = new Segment({
       name: name.trim(),
       rules,
-      mongoQuery, // Store the compiled query for reference
+      mongoQuery, // Store the compiled query for reference (without createdBy)
       createdBy: req.user._id,
       createdAt: new Date(),
       lastRun: null,
@@ -103,8 +103,8 @@ router.post('/', async (req, res) => {
     
     await segment.save();
     
-    // Get initial count
-    const count = await Customer.countDocuments(mongoQuery);
+    // Get initial count (ALWAYS include createdBy)
+    const count = await Customer.countDocuments({ ...mongoQuery, createdBy: req.user._id });
     
     // Update segment with count
     segment.customerCount = count;
@@ -137,9 +137,20 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const segments = await Segment.find({ createdBy: req.user._id })
-      .select('name customerCount createdAt lastRun')
+      .select('name customerCount createdAt lastRun rules')
       .sort({ createdAt: -1 });
-    
+
+    // Recalculate and update customerCount for each segment
+    for (const segment of segments) {
+      const mongoQuery = buildMongoQuery(segment.rules);
+      const count = await Customer.countDocuments({ ...mongoQuery, createdBy: req.user._id });
+      if (segment.customerCount !== count) {
+        segment.customerCount = count;
+        segment.lastRun = new Date();
+        await segment.save();
+      }
+    }
+
     res.json({
       success: true,
       segments

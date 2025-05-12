@@ -4,7 +4,7 @@ import { QueryBuilder, formatQuery } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
 import { useAuth } from '../components/AuthContext';
 import { authFetch } from '../utils/authFetch';
-import { Eye, Save, Target, AlertTriangle, Check, Trash2 } from 'lucide-react';
+import { Eye, Save, Target, AlertTriangle, Check, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // API base URL (set by environment or fallback to localhost)
@@ -87,6 +87,7 @@ export default function SegmentBuilder({ onSave }) {
   const [segmentPreview, setSegmentPreview] = useState({});
   const [segmentPreviewLoading, setSegmentPreviewLoading] = useState(false);
   const [segmentPreviewError, setSegmentPreviewError] = useState('');
+  const [showSampleCustomers, setShowSampleCustomers] = useState(false);
   const navigate = useNavigate();
 
   // Ensure new rules have proper default values
@@ -603,39 +604,46 @@ const ValueEditor = (props) => {
           
           {previewResults.length > 0 && (
             <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
-              <div className="p-2 sm:p-3 md:p-4 bg-gray-50 border-b border-gray-200 font-medium flex flex-col sm:flex-row md:flex-row justify-between items-start sm:items-center md:items-center">
-                <span className="text-xs sm:text-base md:text-lg">Sample Customers ({previewResults.length})</span>
-                <span className="text-xs text-gray-500">Showing a sample of matching customers</span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm md:text-base">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      {Object.keys(previewResults[0]).map(key => (
-                        <th 
-                          key={key}
-                          className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-xs sm:text-sm md:text-base font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          {key}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {previewResults.map((customer, i) => (
-                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        {Object.values(customer).map((val, j) => (
-                          <td key={j} className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-xs sm:text-sm md:text-base text-gray-500">
-                            {typeof val === 'object' && val instanceof Date 
-                              ? val.toLocaleString() 
-                              : String(val)}
-                          </td>
+              <button
+                className="flex items-center gap-2 px-4 py-2 w-full text-left text-xs sm:text-base md:text-lg font-medium bg-gray-50 border-b border-gray-200 hover:bg-gray-100 transition"
+                onClick={() => setShowSampleCustomers(v => !v)}
+                aria-expanded={showSampleCustomers}
+              >
+                <span>Sample Customers ({previewResults.length})</span>
+                {showSampleCustomers ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                <span className="text-xs text-gray-500 ml-2">Showing a sample of matching customers</span>
+              </button>
+              {showSampleCustomers && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm md:text-base">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        {Object.keys(previewResults[0]).map(key => (
+                          <th 
+                            key={key}
+                            className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-xs sm:text-sm md:text-base font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            {key}
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {previewResults.map((customer, i) => (
+                        <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          {Object.values(customer).map((val, j) => (
+                            <td key={j} className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap text-xs sm:text-sm md:text-base text-gray-500">
+                              {typeof val === 'object' && val instanceof Date 
+                                ? val.toLocaleString() 
+                                : String(val)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

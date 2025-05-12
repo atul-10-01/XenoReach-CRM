@@ -70,6 +70,7 @@ export default function Navbar() {
                   <Link to="/segments" className={`text-gray-700 hover:text-blue-800 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/segments' ? 'border-gray-800' : 'border-transparent'}`}>Segment Builder</Link>
                   <Link to="/campaigns" className={`text-gray-700 hover:text-blue-800 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/campaigns' ? 'border-gray-800' : 'border-transparent'}`}>Campaign Creator</Link>
                   <Link to="/history" className={`text-gray-700 hover:text-blue-800 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/history' ? 'border-gray-800' : 'border-transparent'}`}>Campaign History</Link>
+                  <Link to="/import-customers" className={`text-gray-700 hover:text-green-800 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/import-customers' ? 'border-green-800' : 'border-transparent'}`}>Import Customers</Link>
                 </>
               )}
               {!user && (
@@ -112,6 +113,7 @@ export default function Navbar() {
                   <Link to="/segments" className={`text-gray-700 hover:text-blue-600 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/segments' ? 'border-gray-800' : 'border-transparent'}`} onClick={() => setMenuOpen(false)}>Segment Builder</Link>
                   <Link to="/campaigns" className={`text-gray-700 hover:text-blue-600 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/campaigns' ? 'border-gray-800' : 'border-transparent'}`} onClick={() => setMenuOpen(false)}>Campaign Creator</Link>
                   <Link to="/history" className={`text-gray-700 hover:text-blue-600 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/history' ? 'border-gray-800' : 'border-transparent'}`} onClick={() => setMenuOpen(false)}>Campaign History</Link>
+                  <Link to="/import-customers" className={`text-gray-700 hover:text-green-600 font-medium px-2 pb-1 transition border-b-2 ${location.pathname === '/import-customers' ? 'border-green-800' : 'border-transparent'}`} onClick={() => setMenuOpen(false)}>Import Customers</Link>
                 </>
               )}
               {!user && (
