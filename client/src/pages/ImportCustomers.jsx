@@ -37,7 +37,7 @@ export default function ImportCustomers() {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      const res = await fetch('/api/customers/import', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/customers/import`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`
