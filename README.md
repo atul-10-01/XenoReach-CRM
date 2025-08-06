@@ -122,7 +122,7 @@ npm run dev
 
 - Frontend: [http://localhost:5173](http://localhost:5173)
 - Backend API: [http://localhost:3001](http://localhost:3001)
-- API Docs (Swagger): [http://localhost:3001/api-docs](http://localhost:3001/api-docs)
+- API Docs (Swagger): [https://xenoreach-crm.onrender.com/api-docs](https://xenoreach-crm.onrender.com/api-docs)
 
 ---
 

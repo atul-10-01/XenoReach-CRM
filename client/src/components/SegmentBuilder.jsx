@@ -277,7 +277,7 @@ const ValueEditor = (props) => {
       type="text"  // Using text type for all inputs for consistent behavior
       value={props.value === undefined || props.value === null ? '' : props.value}
       onChange={(e) => props.handleOnChange(e.target.value)}
-      className="border px-2 py-1 rounded bg-white w-full sm:w-32 block"
+      className="border px-2 py-1 rounded bg-white ml-1 w-full sm:w-25 block"
       placeholder={field?.defaultValue ?? ''}
       autoComplete="off"
       // Use inputMode for mobile keyboard hints without the browser behaviors of type="number"

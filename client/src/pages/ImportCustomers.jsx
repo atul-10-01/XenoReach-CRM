@@ -68,6 +68,10 @@ export default function ImportCustomers() {
           <li>Upload your file using the form below.</li>
         </ol>
         <p className="text-sm text-gray-600">Tip: Dates should be in <b>YYYY-MM-DD</b> format.</p>
+        <p className="text-sm text-gray-600">
+          <b>Excel Users:</b> Before entering dates, select the date column → Right-click → Format Cells → Text. 
+          Then enter dates as <b>YYYY-MM-DD</b> (e.g., 2024-05-01).
+        </p>
       </div>
       <form onSubmit={handleUpload} className="flex flex-col gap-4">
         <label className="block">
