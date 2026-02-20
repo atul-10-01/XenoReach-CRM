@@ -63,39 +63,39 @@ export default function Register() {
         {registered ? (
           <div className="text-green-600 text-center">{registerMsg}</div>
         ) : (
-        <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
-            placeholder="Full Name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            required
-          />
-          <input
-            type="email"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-          <button
-            type="submit"
-            className="bg-green-600 text-white rounded-lg py-2 font-semibold hover:bg-green-700 transition"
-            disabled={loading}
-          >
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        </form>
+          <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
+            <input
+              type="text"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+              placeholder="Full Name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+            />
+            <input
+              type="email"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+            <input
+              type="password"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="submit"
+              className="bg-green-600 text-white rounded-lg py-2 font-semibold hover:bg-green-700 transition"
+              disabled={loading}
+            >
+              {loading ? 'Registering...' : 'Register'}
+            </button>
+          </form>
         )}
         <div className="my-4 w-full flex items-center">
           <div className="flex-grow border-t border-gray-200"></div>

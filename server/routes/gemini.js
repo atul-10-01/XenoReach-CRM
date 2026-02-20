@@ -31,7 +31,7 @@ Segment Name: "${segmentName}"
 ${segmentDescription ? segmentDescription : ''}
 `;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
@@ -52,17 +52,17 @@ ${segmentDescription ? segmentDescription : ''}
       })
       .filter(Boolean);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       suggestions,
-      rawResponse: text 
+      rawResponse: text
     });
   } catch (err) {
     console.error('Gemini API error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to generate suggestions', 
-      error: err.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate suggestions',
+      error: err.message
     });
   }
 });
@@ -93,7 +93,7 @@ Input: ${description}
 Output:
 `;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();

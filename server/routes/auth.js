@@ -24,13 +24,27 @@ router.post('/google', async (req, res) => {
     const payload = ticket.getPayload();
     let user = await User.findOne({ googleId: payload.sub });
     if (!user) {
-      user = await User.create({
-        googleId: payload.sub,
-        name: payload.name,
-        email: payload.email,
-        role: 'user',
-        isVerified: true
-      });
+      // If not found by Google ID, try to find by Email
+      user = await User.findOne({ email: payload.email });
+      console.log('Existing user found by Email:', user ? 'Yes' : 'No');
+
+      if (user) {
+        // User exists with this email but no Google ID. Link them!
+        user.googleId = payload.sub;
+        if (!user.isVerified) user.isVerified = true;
+        await user.save();
+        console.log('Linked Google account to existing user by email');
+      } else {
+        // Create brand new user
+        user = await User.create({
+          googleId: payload.sub,
+          name: payload.name,
+          email: payload.email,
+          role: 'user',
+          isVerified: true
+        });
+        console.log('Created new user via Google Auth');
+      }
     } else if (!user.isVerified) {
       user.isVerified = true;
       await user.save();
@@ -70,12 +84,15 @@ router.post('/login', async (req, res) => {
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
+  console.log(`--- Registration (OTP/Verify) Request for: ${email} ---`);
   if (!name || !email || !password) {
+    console.log('Registration error: Missing fields');
     return res.status(400).json({ message: 'Name, email, and password are required' });
   }
   try {
     const existing = await User.findOne({ email });
     if (existing) {
+      console.log('Registration error: Email already registered');
       return res.status(400).json({ message: 'Email already registered' });
     }
     const hashed = await bcrypt.hash(password, 10);
@@ -90,13 +107,16 @@ router.post('/register', async (req, res) => {
     });
     // Send verification email
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verificationToken}`;
-    await sendEmail(
+    console.log(`Prepared verification (OTP) link: ${verifyUrl}`);
+    const emailResult = await sendEmail(
       user.email,
       'Verify your XenoReach CRM account',
       `Hi ${user.name},\n\nPlease verify your email by clicking the link below:\n${verifyUrl}\n\nIf you did not sign up, you can ignore this email.`
     );
+    console.log('Send email result: ', emailResult);
     res.status(201).json({ message: 'Registration successful. Please check your email to verify your account.' });
   } catch (err) {
+    console.error('*** Registration Error ***:', err);
     res.status(500).json({ message: 'Registration failed', error: err.message });
   }
 });
@@ -111,6 +131,7 @@ router.get('/verify-email', async (req, res) => {
       user.isVerified = true;
       user.verificationToken = undefined;
       await user.save();
+      console.log('User successfully verified:', user.email);
     }
     // Always return success, even if already verified or token is invalid/expired
     return res.status(200).json({ message: 'Email verified successfully' });
